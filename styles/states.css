@@ -1,0 +1,84 @@
+/* states.css — loading / empty / error blocks and the staged entrance animation. */
+
+/* components.css — reusable blocks: buttons, fields, subject cards, chapter panel, states. */
+
+/* ---------- States: loading, empty, error ---------- */
+.state {
+  padding: var(--sp-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-0);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.state--error {
+  border-color: var(--danger);
+  color: var(--text);
+}
+
+.state__title {
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.loading__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--saffron);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .loading__dot {
+    animation: pulse 900ms var(--ease) infinite alternate;
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Staged entrance (cheap, skippable, no JS dependency) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise var(--dur-2) var(--ease) both;
+    animation-delay: calc(var(--rise-index, 0) * var(--stagger));
+  }
+
+  .subjects__grid > li:nth-child(1) { --rise-index: 0; }
+  .subjects__grid > li:nth-child(2) { --rise-index: 1; }
+  .subjects__grid > li:nth-child(3) { --rise-index: 2; }
+  .subjects__grid > li:nth-child(4) { --rise-index: 3; }
+  .subjects__grid > li:nth-child(5) { --rise-index: 4; }
+  .subjects__grid > li:nth-child(n + 6) { --rise-index: 5; }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

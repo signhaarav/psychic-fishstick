@@ -1,0 +1,109 @@
+/* layout.css — the page shell: container, section rhythm, footer, toast host. Navbar lives in nav.css. */
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--sp-4);
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-inline: var(--sp-5);
+  }
+}
+
+/* ---------- Sections ---------- */
+.section {
+  padding-block: var(--sp-8);
+}
+
+.section--tinted {
+  background-color: var(--surface-1);
+}
+
+.section__head {
+  margin-block-end: var(--sp-6);
+}
+
+.section__title {
+  margin-block-end: var(--sp-2);
+}
+
+.section__lede {
+  color: var(--text-muted);
+  font-size: var(--fs-lg);
+  max-width: 60ch;
+}
+
+/* Below-the-fold blocks are not laid out or painted until they approach the viewport.
+   CSS-only lazy loading: no JS, no observer, no layout shift (intrinsic size is reserved). */
+.section--tinted,
+.footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 40rem;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  background-image: var(--grad-ink);
+  color: var(--text-on-ink);
+  padding-block: var(--sp-7) var(--sp-8);
+}
+
+.footer__grid {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+@media (min-width: 780px) {
+  .footer__grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.footer__title {
+  font-size: var(--fs-md);
+  margin-block-end: var(--sp-2);
+}
+
+.footer__text {
+  color: var(--text-on-ink-muted);
+  font-size: var(--fs-sm);
+}
+
+.footer__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.footer a {
+  color: var(--saffron);
+}
+
+.footer a:hover {
+  color: var(--surface-0);
+}
+
+/* ---------- Toast host ---------- */
+.toasts {
+  position: fixed;
+  inset-block-end: var(--sp-4);
+  inset-inline: var(--sp-4);
+  z-index: var(--z-toast);
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: center;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .toasts {
+    inset-inline: auto var(--sp-6);
+    justify-items: end;
+  }
+}
