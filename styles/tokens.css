@@ -1,165 +1,179 @@
 /* tokens.css — the single source of truth for every design value.
-   Do not edit values without approval (AGENTS.md §8). Contrast ratios are computed,
-   not eyeballed; see AGENTS.md §3.1 for the table they come from. */
+   Light = "Editorial" (default), dark = "Studio". No token is eyeballed: every
+   text pair below is >= 4.5:1 and every control border >= 3:1 (AGENTS.md §3.1). */
 
 :root {
-  /* ---- Palette: light ("Chalk & Ink") ---- */
-  --surface-0: #fcfaf5;
-  --surface-1: #f5f1e8;
-  --surface-2: #efeadf;
+  color-scheme: light;
 
-  --ink-900: #0e1433;
-  --ink-800: #17204a;
-  --ink-700: #2a2e6e;
-  --plum-600: #6d3a7a;
+  /* ---- Canvas ---- */
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --sunken: #f3f4f7;
+  --overlay: rgba(11, 18, 32, 0.42);
 
-  --text: var(--ink-900);
-  --text-muted: #4a5474;
-  --text-subtle: #6b7590;
-  --text-on-ink: #fcfaf5;
-  --text-on-ink-muted: #b9c0d6;
+  /* ---- Ink ---- */
+  --ink: #0b1220;        /* 18.1:1 on --bg */
+  --ink-2: #3a4256;      /*  9.7:1 */
+  --ink-3: #5d6577;      /*  5.7:1 */
+  --ink-inverse: #f7f8fb;
 
-  --border: #cbd3e3;
-  --border-strong: #76809a;
+  /* ---- Lines ---- */
+  --line: #e4e6ec;          /* decorative hairline only */
+  --line-soft: #eef0f4;
+  --line-control: #7b8496;  /* 3.76:1 on --surface — form control boundaries */
+  --line-strong: #c9cdd8;
 
-  --saffron: #f0a22e;
-  --saffron-600: #c97f14;
-  --saffron-700: #8f5400;
-  --on-saffron: #0e1433;
+  /* ---- Accent (one accent, everywhere) ---- */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-ink: #4338ca;
+  --accent-weak: #eef0ff;
+  --on-accent: #ffffff;      /* 6.3:1 */
 
-  --success: #1e6b45;
-  --warning: #8a5300;
-  --danger: #a3231f;
-  --info: #1e5a8a;
-  --focus: #2b3a8f;
+  /* ---- Status ---- */
+  --success: #0b6b3a;
+  --success-weak: #e8f5ee;
+  --warning: #b45309;
+  --warning-weak: #fff4e5;
+  --danger: #a4201c;
+  --danger-weak: #fdecea;
+  --info: #17507a;
+  --info-weak: #e9f2f9;
 
-  /* Subject hues — deliberately spread across the palette, never near-greys */
-  --hue-indigo: #2a2e6e;
-  --hue-sage: #1e6b45;
-  --hue-plum: #6d3a7a;
-  --hue-sky: #1e5a8a;
-  --hue-saffron: #b06a00;
+  --focus: #4f46e5;
+  --focus-offset: 2px;
+  --focus-ring: 2px solid var(--focus);
 
-  /* Gradients: across genuinely different hues only */
-  --grad-ink: linear-gradient(135deg, #0e1433 0%, #2a2e6e 58%, #6d3a7a 100%);
-  --grad-accent: linear-gradient(120deg, #f0a22e 0%, #e4572e 100%);
+  /* ---- Subject hues: icons and 4px dots only, never large fills ---- */
+  --hue-indigo: #4338ca;
+  --hue-sage: #15803d;
+  --hue-plum: #7e22ce;
+  --hue-sky: #0369a1;
+  --hue-saffron: #b45309;
 
-  /* ---- Scrollbar ---- */
-  --scroll-track: #efeadf;
-  --scroll-thumb: #6b7590;
-  --scroll-thumb-hover: #4a5474;
-
-  /* ---- Type scale (system fonts only, no @font-face ever) ---- */
+  /* ---- Type: system fonts only, no @font-face ever ---- */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari",
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
+  --fs-2xs: 0.75rem;
   --fs-xs: 0.8125rem;
-  --fs-sm: 0.9375rem;
-  --fs-md: 1rem;
-  --fs-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
-  --fs-xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
-  --fs-2xl: clamp(1.75rem, 1.35rem + 2vw, 2.75rem);
-  --lh-tight: 1.2;
-  --lh-body: 1.6;
-  --measure: 68ch;
+  --fs-sm: 0.875rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.0625rem;
+  --fs-xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.45rem);
+  --fs-2xl: clamp(1.6rem, 1.35rem + 1vw, 2.1rem);
+  --fs-3xl: clamp(1.9rem, 1.5rem + 1.6vw, 2.6rem);
 
-  /* ---- Spacing (4px rhythm) ---- */
+  --lh-tight: 1.15;
+  --lh-snug: 1.4;
+  --lh-body: 1.6;
+
+  --tracking-tight: -0.021em;
+  --tracking-wide: 0.06em;
+
+  /* ---- Space: 4px grid ---- */
   --sp-1: 0.25rem;
   --sp-2: 0.5rem;
   --sp-3: 0.75rem;
   --sp-4: 1rem;
-  --sp-5: 1.5rem;
-  --sp-6: 2rem;
-  --sp-7: 3rem;
-  --sp-8: 4rem;
-  --sp-9: 6rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
 
-  /* ---- Radii, elevation, chrome ---- */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-  --shadow-1: 0 1px 2px rgb(14 20 51 / 0.06);
-  --shadow-2: 0 12px 32px -12px rgb(14 20 51 / 0.35);
-  --nav-h: 60px;
-  --container: 72rem;
-  --focus-ring: 2px solid var(--focus);
-  --focus-offset: 2px;
+  /* ---- Radius ---- */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
 
-  /* ---- Motion (transform/opacity only) ---- */
+  /* ---- Elevation: two levels, both very soft ---- */
+  --shadow-1: 0 1px 2px rgba(11, 18, 32, 0.05), 0 1px 1px rgba(11, 18, 32, 0.03);
+  --shadow-2: 0 1px 2px rgba(11, 18, 32, 0.04), 0 12px 28px -18px rgba(11, 18, 32, 0.25);
+  --shadow-3: 0 24px 48px -24px rgba(11, 18, 32, 0.3);
+
+  /* ---- Motion: transform/opacity only, never colour ---- */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 240ms;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
-  --dur-1: 140ms;
-  --dur-2: 240ms;
-  --stagger: 55ms;
 
-  /* ---- Z-index ladder (only these values) ---- */
-  --z-nav: 50;
-  --z-toast: 60;
-  --z-dialog: 70;
+  /* ---- Frame ---- */
+  --appbar-h: 3.5rem;
+  --tabbar-h: 3.75rem;
+  --rail-w: 15.75rem;
+  --content-max: 56rem;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
-/* ---- Dark theme: token swap only, components never hardcode colours ---- */
+/* ---- Dark: "Studio" — elevated charcoal, not inverted paper ---- */
 [data-theme="dark"] {
-  --surface-0: #131a38;
-  --surface-1: #1b2347;
-  --surface-2: #0f1430;
+  color-scheme: dark;
 
-  --ink-900: #0b1026;
-  --ink-800: #0f1630;
-  --ink-700: #1f2a5e;
-  --plum-600: #8a4d99;
+  --bg: #0b0d12;
+  --surface: #14171f;
+  --sunken: #101319;
+  --overlay: rgba(3, 5, 9, 0.62);
 
-  --text: #f5f1e8;
-  --text-muted: #b9c0d6;
-  --text-subtle: #9aa4bd;
-  --text-on-ink: #f5f1e8;
-  --text-on-ink-muted: #b9c0d6;
+  --ink: #f2f4f8;        /* 17.7:1 on --bg */
+  --ink-2: #c6ccd8;      /* 12.1:1 */
+  --ink-3: #98a1b2;      /*  7.5:1 */
+  --ink-inverse: #0b1220;
 
-  --border: #2c3560;
-  --border-strong: #7c87a8;
+  --line: #242a35;
+  --line-soft: #1c222c;
+  --line-control: #646f82;  /* 3.53:1 on --surface */
+  --line-strong: #333b4a;
 
-  --saffron: #f0a22e;
-  --saffron-600: #f5b751;
-  --saffron-700: #f0a22e;
-  --on-saffron: #131a38;
+  --accent: #a5b4fc;
+  --accent-hover: #c7d2fe;
+  --accent-ink: #c7d2fe;
+  --accent-weak: #1a2033;
+  --on-accent: #10132b;     /* 9.2:1 */
 
-  --success: #7ed0a3;
-  --warning: #f5c56b;
-  --danger: #ff9e93;
-  --info: #8fb3e0;
-  --focus: #f0a22e;
+  --success: #4ade80;
+  --success-weak: #10251a;
+  --warning: #f0b45e;
+  --warning-weak: #2a1f0f;
+  --danger: #fca5a5;
+  --danger-weak: #2b1516;
+  --info: #7dd3fc;
+  --info-weak: #10202b;
 
-  --hue-indigo: #8fa4ee;
-  --hue-sage: #7ed0a3;
-  --hue-plum: #c79ad4;
-  --hue-sky: #8fb3e0;
-  --hue-saffron: #f5b751;
+  --focus: #a5b4fc;
 
-  --grad-ink: linear-gradient(135deg, #0f1430 0%, #1f2a5e 58%, #5a2c66 100%);
-  --grad-accent: linear-gradient(120deg, #f0a22e 0%, #e4572e 100%);
+  --hue-indigo: #a5b4fc;
+  --hue-sage: #86efac;
+  --hue-plum: #e9d5ff;
+  --hue-sky: #7dd3fc;
+  --hue-saffron: #fcd34d;
 
-  --scroll-track: #0f1430;
-  --scroll-thumb: #7c87a8;
-  --scroll-thumb-hover: #98a2bc;
-
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-2: 0 12px 32px -12px rgb(0 0 0 / 0.7);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -20px rgba(0, 0, 0, 0.8);
+  --shadow-3: 0 26px 52px -26px rgba(0, 0, 0, 0.85);
 }
 
+/* ---- Reduced motion: nothing moves, nothing eases ---- */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-1: 0ms;
     --dur-2: 0ms;
-    --stagger: 0ms;
+    --dur-3: 0ms;
   }
 }
 
-/* LEDM: low-end device mode — set by settings.js when the device looks weak */
+/* ---- Low-End Device Mode: no elevation, no animation ---- */
 .ledm {
   --dur-1: 0ms;
   --dur-2: 0ms;
-  --stagger: 0ms;
-  --nav-h: 52px;
+  --dur-3: 0ms;
+  --shadow-1: none;
   --shadow-2: none;
+  --shadow-3: none;
 }

@@ -9,89 +9,94 @@
 ## 1. Shape of the system
 
 VidyaSetu is **static files plus a browser-side script layer**. There is no server, no build step, no database.
+Since the redesign it is shaped like an **app**, not a page: a fixed frame with three views and one scrolling area.
 
 ```
 Host (GitHub Pages / python3 -m http.server)
         │  serves files, does nothing else
         ▼
- ┌────────────────────────── Browser ──────────────────────────┐
- │  index.html ──► styles/*.css (presentation)                 │
- │             └─► modules/*.js (behaviour)                     │
- │                      └─► services/*.js (storage + network)   │
- │                                ├─► localStorage  (user data) │
- │                                └─► provider API  (BYOK)      │
- └──────────────────────────────────────────────────────────────┘
+ ┌────────────────────────── Browser ───────────────────────────┐
+ │  index.html ──► styles/*.css (tokens → frame → views)        │
+ │      │  app bar ─ viewport (only scroll container) ─ tab bar  │
+ │      └─► modules/*.js ──► router.js (which view is visible)   │
+ │               └─► services/*.js (storage + network)           │
+ │                        ├─► localStorage  (user data)          │
+ │                        └─► provider API  (BYOK)               │
+ └────────────────────────────────────────────────────────────────┘
 ```
 
-Measured first load, resolved through the import graph: **26 requests · 85.9 KB raw · 30.4 KB gzip**
+Measured first load, resolved through the import graph: **35 requests · 90.7 KB raw · 32.1 KB gzip**
 (budget 200 KB).
 
-Three consequences that shape everything:
+Four consequences that shape everything:
 
 | Reality | Response |
 | --- | --- |
 | No build step | Files load as written: `<script type="module">`, native CSS, ES modules with `.js` extensions. |
-| Hosted under a sub-path (`/vidyasetu/`) | **Relative paths only** (`./styles/base.css`). Root-absolute paths break on GitHub Pages project sites. |
+| Hosted under a sub-path (`/vidyasetu/`) | **Relative paths only** (`./styles/shell.css`). Root-absolute paths break on GitHub Pages project sites. |
 | No server to hide anything | Keys are the user's, live in their browser, and go only to the provider they chose. |
+| Phone-first, app-shaped | `body` never scrolls; `main#main` is the only scroll container; navigation swaps panes in place. |
 
 ---
 
 ## 2. Structure
 
-Shipped as of Phase 2. Every file is ≤ 200 lines (`AGENTS.md §7`); where that cap forced a split, the split is
-by responsibility, listed below.
+Shipped as of the app-shell redesign (2026-11-26). Every file is ≤ 200 lines (`AGENTS.md §7`); where that cap
+forced a split, the split is by responsibility.
 
 ```
 /
-├── index.html                 # The page: skip link, fixed nav, hero, subject browser, how-it-works/BYOK, footer, settings dialog, toast host, inline SVG sprite, three module <script> tags.
+├── index.html                 # The app shell: skip link, app bar, three views (Home, Subjects, Settings), tab bar / desktop rail, toast host, inline SVG sprite, four module <script> tags.
 ├── README.md                  # Human-facing intro: what it is, how to serve it, what it promises.
-├── AGENTS.md                  # The rulebook: constraints, quality bar, visual identity, workflow, testing, module rules.
-├── ARCHITECTURE.md            # This map: file purposes, data flow, storage schema, extension guides.
-├── PROGRESS.md                # The logbook: what is done, what is in flight, decisions, bugs.
+├── AGENTS.md                  # The rulebook. Untouched by the redesign — its §3.1 palette table is now stale (PROGRESS §4).
+├── ARCHITECTURE.md            # This map.
+├── PROGRESS.md                # The logbook.
 │
 ├── styles/
-│   ├── tokens.css             # Every design value as a custom property (palette both themes, type scale, spacing, radii, z-index, nav-h, motion) — the only file allowed to hold raw values.
-│   ├── base.css               # Reset, element defaults, typography, focus/selection/caret, utilities, reduced-motion collapse.
-│   ├── layout.css             # Page shell: container, section rhythm, footer, toast host.
-│   ├── nav.css                # The fixed navbar: brand, links, active state, mobile disclosure menu.
-│   ├── sections.css           # Hero, subject-browser toolbar and grid, "how it works" steps, BYOK explainer.
-│   ├── components.css         # Buttons and form fields (label, control, hint, error, show/hide row).
-│   ├── cards.css              # Icons, chips, subject cards, hue mapping, chapter panel.
-│   ├── states.css             # Loading / empty / error blocks, the staged entrance animation and its keyframes.
-│   ├── dialog.css             # The settings modal and the saved-key rows inside it.
-│   ├── toast.css              # One toast, its action button, its entrance.
-│   └── scrollbar.css          # Palette scrollbars for standards browsers and Chromium/Safari, plus the dialog's inner scroller.
+│   ├── tokens.css             # Every design value: Editorial light + Studio dark palettes, type scale, 4px spacing grid, radii, two elevation levels, motion durations, frame sizes.
+│   ├── base.css               # Reset, element defaults, focus ring, utilities, sprite host, skip link.
+│   ├── shell.css              # The app frame: app bar, the single scrolling viewport, tab bar that becomes a rail, view entrance.
+│   ├── components.css         # Buttons and the segmented control.
+│   ├── controls.css           # Text fields, search, switch — boundaries use --line-control (≥ 3:1).
+│   ├── sections.css           # View headers, surface blocks, the stat strip, detail headers.
+│   ├── cards.css              # Subject rows and the five hue hooks (icon colour only).
+│   ├── chapters.css           # Book groups and numbered chapter rows.
+│   ├── states.css             # Loading / empty / error blocks.
+│   ├── settings.css           # Settings view: appearance rows, key form, saved-key rows, about list.
+│   ├── toast.css              # One toast, its action, its entrance, its desktop offset.
+│   └── scrollbar.css          # Thin, theme-aware scrollbar for the viewport only.
 │
 ├── modules/
-│   ├── nav.js                 # Fixed-nav behaviour: menu toggle with aria-expanded, Esc/outside-click close, one IntersectionObserver for active-section state.
-│   ├── subjects.js            # Renders the grid, live search, result count, and the loading/empty/error states; owns which subject is open.
-│   ├── subjectPanel.js        # Renders the chapter panel for one subject (books → chapters), pure and reusable.
-│   ├── settings.js            # Settings dialog: provider select, masked key field, save, per-key test/remove-with-undo, appearance controls.
-│   ├── keyList.js             # Renders the saved-key rows (masked only) and the honest "no keys yet" state.
-│   ├── theme.js               # Theme resolution (light/dark/system), LEDM detection and application, settings persistence.
-│   ├── toast.js               # notify(message, opts) into the single aria-live region; one timer, one toast, optional action.
+│   ├── router.js              # Hash router: view visibility, tab aria-current, app-bar label, document title, scroll reset, focus to the view title.
+│   ├── home.js                # Home view: real counts, the BYOK status line, subject shortcuts. No invented metrics.
+│   ├── subjects.js            # Subjects view: searchable list, count, loading/empty/error states, pane swap into a subject.
+│   ├── subjectPanel.js        # Chapter list for one subject (books → numbered chapters), pure rendering.
+│   ├── subjectRow.js          # One subject as a tappable row, shared by Home and Subjects.
+│   ├── contentStore.js        # One shared load of the catalogue per page; a failure is not cached.
+│   ├── settings.js            # Settings view: theme radios, LEDM switch, provider select, key save/test/remove-with-undo.
+│   ├── keyList.js             # Masked key rows and the honest "no keys yet" state.
+│   ├── theme.js               # Light/dark/system resolution, LEDM detection, settings persistence, theme-color meta.
+│   ├── toast.js               # notify(message, opts) into the single aria-live region.
 │   └── dom.js                 # el() and svgIcon() helpers — no state, no data access, no HTML strings.
 │
 ├── services/
 │   ├── storageService.js      # The only code that touches localStorage: namespaced read/write/remove/clear, JSON-safe, quota- and private-mode-aware.
 │   ├── byokService.js         # The only code that holds or sends keys: CRUD, masking, test call, typed errors. Never logs a key.
-│   ├── providers.js           # The provider registry: id, label, origin, key hint, docs URL, and how to build each test request.
+│   ├── providers.js           # The provider registry: id, label, origin, key hint, docs URL, test-request builder.
 │   └── contentService.js      # The only code that fetches content: loads and validates data/subjects.json, typed ContentError.
 │
 ├── data/
 │   ├── subjects.json          # Seeded Class 9 NCERT catalogue: 5 subjects, 12 books, 72 real chapter titles, hue + icon keys.
-│   └── lessons/               # (Session 1) One JSON file per lesson plus index.json; same schema family as subjects.json. Not created yet.
+│   └── lessons/               # (Session 1) One JSON file per lesson plus index.json. Not created yet.
 │
 └── assets/
-    └── icons/                 # Source .svg files (7): favicon, logo, and one per subject. The shipped copies live in the index.html sprite.
+    └── icons/                 # Source .svg files (7): favicon, logo, one per subject. The shipped marks live in the index.html sprite.
 ```
 
-Why more files than the original sketch: the 200-line cap applies to HTML, CSS and JS alike, so `components.css`
-became `components + cards + states + dialog + toast + nav`, and `subjects.js` split into
-`subjects + subjectPanel + dom`. Each file now has exactly one job. Total first-load weight is still ~62 KB raw
-(~21 KB gzip) across 17 requests, and there is still no build step.
-
-Nothing else exists: no `src/`, no `dist/`, no `node_modules/`, no `package.json`, no service worker.
+The redesign replaced four files with twelve stylesheets and eleven modules: `layout.css`, `nav.css`,
+`dialog.css` and `modules/nav.js` are gone; the views introduced `router.js`, `home.js`, `subjectRow.js` and
+`contentStore.js`. Nothing else exists: no `src/`, no `dist/`, no `node_modules/`, no `package.json`, no
+service worker.
 
 ---
 
@@ -100,13 +105,20 @@ Nothing else exists: no `src/`, no `dist/`, no `node_modules/`, no `package.json
 One direction, always: **input → module → service → storage → re-render**.
 
 ```
+User taps a tab, or a subject row
+        │
+        ▼
+modules/router.js          hashchange → show one view, set aria-current, title, focus
+        │
+        └─► modules/*.js   subscribed via onRoute(): render the pane for that route
+
 User types in the subject search
         │
         ▼
-modules/subjects.js        (oninput handler, debounced ~120ms)
+modules/subjects.js        (input handler, debounced ~120ms)
         │  filters the already-loaded array in memory
         ▼
-   re-render grid  ──► count announced via aria-live ──► empty state if 0 matches
+   re-render rows  ──► count announced via aria-live ──► empty state if 0 matches
 
 User saves an API key
         │
@@ -119,17 +131,17 @@ services/byokService.js    (masked preview, build record)
         ▼
 services/storageService.js (write JSON under vs:v1:byok)
         │
-        ├─ ok      → toast "Key saved" + re-render key row (masked)
+        ├─ ok      → toast "Key saved" + re-render key row + `vs:keys-changed` for Home
         └─ failure → toast (danger) + revert UI (optimistic rollback)
 ```
 
 Rules the diagram encodes:
 
 - **Modules never touch `localStorage` or `fetch`.** Only `services/*` may. This is checkable with a grep and is
-  the whole point of the split.
+  the whole point of the split. Caching a content load is an app concern, so it lives in `modules/contentStore.js`.
 - **Services never touch the DOM.** They return data or throw typed errors; the module decides how to show it.
-- **Rendering is explicit.** No framework, no virtual DOM: modules re-render the specific node they own.
-  Text goes in via `textContent`; nodes via `createElement`/`<template>` clones.
+- **Routing is the only global state.** `router.js` holds which view is visible; every other module owns its own
+  DOM subtree and its own closure state.
 - **Persistence is immediate and optimistic.** UI updates first, storage write follows, failures roll back.
 
 ---
@@ -196,37 +208,51 @@ export async function testKey(id, { signal })  // 1-token ping → { ok, latency
 
 | Module | Public surface | Owns |
 | --- | --- | --- |
-| `nav.js` | side-effect init on load | Menu toggle (`aria-expanded`, label and icon swap), Esc and outside-click close, active-section `aria-current` via one IntersectionObserver, reset on resize to desktop. |
-| `subjects.js` | side-effect init on load | Grid render, debounced live search, result count announcement, loading/empty/error states, which subject panel is open, focus return. |
-| `subjectPanel.js` | `renderPanel(panel, subject, note)` | The chapter panel markup for one subject; shows the syllabus note and the honest "lessons in Session 1" line. |
-| `settings.js` | side-effect init on load | Dialog open/close + focus return, provider select, key save/validation messages, per-key test, remove with Undo, appearance controls. |
+| `router.js` | `currentRoute()`, `navigate(path)`, `onRoute(fn)` (replays the current route, returns unsubscribe) | Which view is visible, the tab's `aria-current`, the app-bar label, `document.title`, scroll reset, focus to the view's `h1`. Unknown hashes (e.g. the `#main` skip link) are ignored, never navigated. |
+| `home.js` | side-effect init on load | Stat strip values from the JSON, the BYOK status line, subject shortcuts, reacting to `vs:keys-changed`. |
+| `subjects.js` | side-effect init on load | Debounced search, result count announcement, loading/empty/error states, swapping list for detail, re-applying a deep link once data arrives. |
+| `subjectPanel.js` | `renderPanel(container, subject, note)` | Book groups and numbered chapter rows for one subject, the back link, the "lessons arrive next build" note. |
+| `subjectRow.js` | `subjectRow(subject, { sub })` | One `<li>` with the tappable row: icon, name, sub-line, chapter count, chevron. |
+| `contentStore.js` | `getSubjects()` | The single shared in-flight load; cleared on failure so retry really retries. |
+| `settings.js` | side-effect init on load | Theme radios, LEDM switch, provider select, key save/validation, per-key test, remove with Undo, `vs:keys-changed`. |
 | `keyList.js` | `renderKeyList(listEl)` | Masked key rows and the empty state. Renders no raw key, ever. |
-| `theme.js` | `readSettings`, `applyTheme`, `detectLEDM`, `applyLEDM`, `saveSettings`, `initTheme` | Resolving light/dark/system to `data-theme`, LEDM class, settings persistence, reacting to OS theme changes. |
-| `toast.js` | `notify(message, opts)`, `dismissToast()` | The single toast: one at a time, own timer, optional action button (used for Undo). |
-| `dom.js` | `el(tag, opts)`, `svgIcon(id)` | Element creation with `textContent` only — there is no code path that builds HTML from a string. |
+| `theme.js` | `readSettings`, `applyTheme`, `detectLEDM`, `applyLEDM`, `saveSettings`, `initTheme` | Resolving light/dark/system to `data-theme`, the LEDM class, settings persistence, `theme-color`, OS theme changes. |
+| `toast.js` | `notify(message, opts)`, `dismissToast()` | The single toast: one at a time, own timer, optional action button (Undo). |
+| `dom.js` | `el(tag, opts)`, `svgIcon(id, className)` | Element creation with `textContent` only — no code path builds HTML from a string. |
 
 Rules every module follows:
 
 - **State lives in closure scope.** Nothing is attached to `window`; nothing is exported that another module can mutate.
 - **No fetch, no storage.** Those calls exist only in `services/*`; modules import the service and handle its result.
-- **Idempotent init.** Module bodies run once per page load; handlers are attached to elements that exist in
-  `index.html` or to containers that are re-rendered wholesale (delegation), so re-rendering never stacks listeners.
+- **Idempotent init.** Module bodies run once per page load; handlers attach to elements that exist in
+  `index.html` or to containers re-rendered wholesale (delegation), so re-rendering never stacks listeners.
 - **Explicit re-render.** A module re-renders only the node it owns; there is no global "render the page" call.
 
 ---
 
-## 6. `index.html` — sections and anchors
+## 6. `index.html` — the app shell and its views
 
-| Section | `id` | Content |
+| Part | Selector | Content |
 | --- | --- | --- |
-| Navbar | `#site-nav` | Logo/link home, Home / Subjects / How It Works, Settings button (opens the dialog), mobile menu button. |
-| Hero | `#home` | Genuine copy: free forever, no sign-up, no ads, works on cheap phones; primary CTA → `#subjects`. |
-| Subjects | `#subjects` | Search field + grid seeded from `data/subjects.json` (5 Class 9 NCERT subjects, inline SVG icons). |
-| How It Works / BYOK | `#how-it-works` | Three steps, plain-language explanation that AI features use the student's own key, provider list, "Open settings". |
-| Footer | `#footer` | What this is, "no trackers/no cookies" statement, data-ownership line, link to `#how-it-works`. |
+| App bar | `.appbar` | Brand → `#/home`, and the current view's name (`#appbar-where`). |
+| Viewport | `main#main` | The **only** scroll container. Holds `.wrap` with the three views. |
+| Home | `#view-home` | Eyebrow, `h1`, stat strip (5 / 12 / 72 from the JSON), AI helper card with `#ai-status`, subject shortcuts. |
+| Subjects | `#view-subjects` | `#subjects-browser` (search, `#subjects-count`, `#subjects-grid`) and `#subject-detail` — exactly one visible. |
+| Settings | `#view-settings` | Appearance card (theme radios, LEDM switch), AI keys card (`#key-form`, `#key-list`), About card. |
+| Tab bar | `.tabbar` | Home / Subjects / Settings. Bottom bar below 60rem, left rail at 60rem and up — one markup, two layouts. |
+| Toast host | `#toasts` | The single `aria-live` region, fixed above the tab bar. |
 
-Nav order matches DOM order, so tab order and visual order agree. Anchor targets get `scroll-margin-top` from
-`--nav-h`; the nav uses `scroll-padding-top` as the belt-and-braces version.
+### 6.1 Routes
+
+| Hash | View | Notes |
+| --- | --- | --- |
+| `#/home` | Home | Default when the hash is empty or unknown on first load. |
+| `#/subjects` | Subjects (list) | |
+| `#/subjects/<id>` | Subjects (detail) | Deep-linkable; if the data has not arrived yet, the route is replayed after load. |
+| `#/settings` | Settings | A place in the app, not a modal. |
+
+Browser back/forward works because routes are hashes, and a route change moves focus to the view's `h1`
+(`tabindex="-1"`), so a keyboard user is never left behind in the old pane.
 
 ---
 
@@ -334,37 +360,47 @@ Rules: namespaced and versioned; JSON only; written exclusively by services; cor
 
 ## 10. Rendering, state and accessibility contract
 
+- **The page never scrolls.** `body` is locked to `100dvh` (with `100svh` as the stable fallback); `main#main`
+  is the only scroll container, with `overscroll-behavior: contain`. A route change resets `scrollTop` to 0.
+- **One view at a time**, toggled with the `hidden` attribute — no duplicated DOM, no off-screen sections to
+  paint. Views enter with `opacity` + 6px `translateY` over 240 ms, disabled under reduced motion and LEDM.
+- **Focus is managed, not accidental:** route changes focus the view title; opening a subject focuses the detail
+  pane; the back link returns to the list. `:focus-visible` draws a 2 px ring at 2 px offset; nothing removes a
+  focus outline without a replacement.
 - **Four states per dynamic area:** loading (inline text, no layout jump), empty (explains the next action),
   error (what failed + retry), success. Built in CSS and in the module, not implied.
-- **No `innerHTML` with data.** `textContent` for strings, `createElement`/`<template>` for structure.
-- **No layout thrash:** read phase then write phase; no `getBoundingClientRect()` inside a mutating loop.
-- **Animation:** `transform`/`opacity` only — including transitions, so hover colour changes are instant —
-  ≤ 300 ms, stagger ≤ 60 ms, fully disabled under `prefers-reduced-motion: reduce` and `<html class="ledm">`.
-- **Lazy below the fold, CSS-only:** `.section--tinted` and `.footer` carry `content-visibility: auto` with
-  `contain-intrinsic-size: auto 40rem`, so off-screen blocks are not laid out or painted until they approach the
-  viewport. There is no JS observer and no layout shift.
-- **Accessibility is structural:** landmarks, one `h1`, labelled inputs, `aria-expanded` on the menu, Esc to
-  close dialogs, focus returned to the trigger, `aria-live` for results and toasts, 3:1 focus ring at 2 px offset.
-- **Touch targets ≥ 44×44 px**, verified at 375 px.
+- **No `innerHTML` with data.** `textContent` for strings, `createElement` for structure.
+- **Design values are tokens.** Raw colour, radius, shadow, duration and spacing values exist only in
+  `tokens.css`; both palettes and the LEDM overrides are declared there.
+- **Contrast is computed, not eyeballed.** Light: ink 18.1:1, ink-2 9.7:1, ink-3 5.7:1, white-on-accent 6.3:1,
+  accent on `--accent-weak` 7.0:1, control border 3.76:1 (search pill 3.42:1 against its own fill, selected
+  segment ring 3.76:1). Dark: ink 17.7:1, ink-2 12.1:1, ink-3 7.5:1, on-accent 9.2:1, accent 9.0:1, control
+  border 3.53:1 (search pill 3.66:1, segment ring 3.53:1). A filled control is never its own boundary.
+- **Motion is `transform`/`opacity` only**, ≤ 240 ms, no colour transitions; fully disabled under
+  `prefers-reduced-motion: reduce` and `<html class="ledm">`.
+- **Touch targets ≥ 44 px**: tab bar 52 px, list rows 56 px, every button and input at least 44 px tall.
+- **Settings is a view, not a dialog** — no focus trap to get wrong, Escape does nothing surprising, and the
+  back button leaves it naturally.
 
 ---
 
 ## 11. Extension guides
 
-**Add a subject** → append to `data/subjects.json`, add an icon to `assets/icons/`, inline it in `index.html`.
-No JS change (the grid renders whatever the JSON says).
+**Add a subject** → append to `data/subjects.json`, add an icon to `assets/icons/`, inline it in the sprite.
+No JS change: Home and Subjects both render whatever the JSON says.
+
+**Add a view** → add an entry to `VIEWS` in `modules/router.js`, a `<section class="view" data-view="…">` in
+`index.html`, a `.tab` in the tab bar, and subscribe with `onRoute()`. Nothing else changes — the rail, the
+`aria-current` state and the title follow automatically.
 
 **Add a lesson** (Session 1+) → add `data/lessons/<id>.json`, register it in `data/lessons/index.json`, render via
-the lesson module. Content only; no new storage keys.
+a lesson module reachable from `subjectPanel.js`. Content only; no new storage keys.
 
-**Add a section to the home page** → new `<section id="…">` in `index.html`, a nav link, layout rules in
-`layout.css`. The nav's IntersectionObserver picks it up automatically — never hardcode the section list twice.
+**Restyle anything** → `styles/tokens.css` only. If a colour, radius or shadow is written outside that file, the
+change is in the wrong place.
 
-**Add a provider** → one entry in `PROVIDERS` in `byokService.js` **and** its origin in the CSP `connect-src`
-in the same commit; verify CORS with a real key before shipping; add an error-mapping case.
-
-**Add a page** (later) → new `.html` plus its own module; keep `styles/` shared, keep relative paths, and give
-each page its own CSP copy.
+**Add a provider** → one entry in `PROVIDERS` in `services/providers.js` **and** its origin in the CSP
+`connect-src` in the same commit; verify CORS with a real key before shipping; add an error-mapping case.
 
 Any of these larger than a trivial tweak goes through the Workflow in `AGENTS.md §4`: plan first, then
 "Approved".

@@ -1,5 +1,5 @@
 /**
- * settings.js — the Settings dialog: BYOK key management, appearance, honest status copy.
+ * settings.js — the Settings view: appearance, BYOK key management, honest status copy.
  * Key work is delegated to byokService; this module never reads a raw key.
  */
 
@@ -10,7 +10,6 @@ import { renderKeyList } from './keyList.js';
 import { applyLEDM, applyTheme, initTheme, saveSettings } from './theme.js';
 import { notify } from './toast.js';
 
-const dialog = document.getElementById('settings-dialog');
 const form = document.getElementById('key-form');
 const providerSelect = document.getElementById('provider-select');
 const keyInput = document.getElementById('api-key');
@@ -18,11 +17,10 @@ const keyHint = document.getElementById('key-hint');
 const keyError = document.getElementById('key-error');
 const statusEl = document.getElementById('key-status');
 const listEl = document.getElementById('key-list');
-const themeSelect = document.getElementById('theme-select');
 const ledmToggle = document.getElementById('ledm-toggle');
 const visibilityButton = document.getElementById('key-visibility');
+const themeRadios = document.querySelectorAll('input[name="theme"]');
 
-let lastOpener = null;
 let testing = false;
 
 function setStatus(text, state = 'idle') {
@@ -37,6 +35,11 @@ function showFieldError(message) {
     keyError.hidden = !message;
   }
   keyInput?.setAttribute('aria-invalid', String(Boolean(message)));
+}
+
+/** Home listens for this so its status line is never stale. */
+function announceKeysChanged() {
+  document.dispatchEvent(new CustomEvent('vs:keys-changed'));
 }
 
 const VALIDATION = {
@@ -92,6 +95,7 @@ function removeWithUndo(id) {
   }
 
   renderKeyList(listEl);
+  announceKeysChanged();
   notify(`${label} key removed.`, {
     variant: 'warning',
     actionLabel: 'Undo',
@@ -99,6 +103,7 @@ function removeWithUndo(id) {
     onAction: () => {
       const restored = restoreKey(result.record);
       renderKeyList(listEl);
+      announceKeysChanged();
       notify(restored.ok ? 'Key restored.' : 'Could not restore that key.', {
         variant: restored.ok ? 'success' : 'danger',
       });
@@ -119,6 +124,7 @@ form?.addEventListener('submit', (event) => {
   showFieldError('');
   if (keyInput) keyInput.value = '';
   renderKeyList(listEl);
+  announceKeysChanged();
   setStatus(
     result.persisted
       ? `Saved ${result.masked} in this browser. It leaves only when you use an AI feature.`
@@ -146,9 +152,12 @@ listEl?.addEventListener('click', (event) => {
 
 providerSelect?.addEventListener('change', updateHint);
 
-themeSelect?.addEventListener('change', () => {
-  applyTheme(themeSelect.value);
-  saveSettings({ theme: themeSelect.value });
+themeRadios.forEach((radio) => {
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    applyTheme(radio.value);
+    saveSettings({ theme: radio.value });
+  });
 });
 
 ledmToggle?.addEventListener('change', () => {
@@ -156,36 +165,13 @@ ledmToggle?.addEventListener('change', () => {
   saveSettings({ ledm: ledmToggle.checked });
 });
 
-function openDialog(opener) {
-  if (!dialog) return;
-  lastOpener = opener ?? document.activeElement;
-  fillProviders();
-  updateHint();
-  renderKeyList(listEl);
-  setStatus('');
-  if (!dialog.open) dialog.showModal();
-  providerSelect?.focus();
-}
-
-document.addEventListener('click', (event) => {
-  const opener = event.target.closest('[data-open-settings]');
-  if (opener) openDialog(opener);
-});
-
-dialog?.addEventListener('click', (event) => {
-  if (event.target === dialog) dialog.close();
-});
-
-dialog?.addEventListener('close', () => {
-  showFieldError('');
-  setStatus('');
-  lastOpener?.focus?.();
-});
-
 const settings = initTheme();
-if (themeSelect) themeSelect.value = settings.theme;
+const themeRadio = document.getElementById(`theme-${settings.theme}`);
+if (themeRadio) themeRadio.checked = true;
 if (ledmToggle) {
   ledmToggle.checked =
     settings.ledm === null ? document.documentElement.classList.contains('ledm') : settings.ledm;
 }
+fillProviders();
+updateHint();
 renderKeyList(listEl);
