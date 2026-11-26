@@ -1,676 +1,287 @@
 # ARCHITECTURE.md — The Map
 
-> Companion to `AGENTS.md` (rules). This file describes **structure, interfaces, and data flow**.
-> Read it before adding a module, a page, or a provider. If code and this document disagree, the document
-> wins until the human says otherwise — then update the document in the same commit as the code.
+> Companion to `AGENTS.md` (rules). This describes **what exists, what each file is for, and how data moves**.
+> One sentence per file, deliberately: if a file needs a paragraph, it is doing too much (200-line cap).
+> If code and this document disagree, the document is right until we change both together.
 
 ---
 
-## 1. System Overview
+## 1. Shape of the system
 
-ClassZero is a **static site with a client-side application runtime**. There is no server, no database, no
-authentication service, and no API of our own. The host does one thing: serve files.
+VidyaSetu is **static files plus a browser-side script layer**. There is no server, no build step, no database.
 
 ```
- ┌─────────────────────────── Browser (the only runtime) ───────────────────────────┐
- │                                                                                  │
- │   HTML shells          CSS layers              ES modules (vanilla)              │
- │   ───────────          ──────────              ─────────────────────              │
- │   index.html           reset → tokens          core/    (state, events, router)  │
- │   lessons.html    →    → base → layout    +    modules/ (domain logic)            │
- │   notes.html           → components            ui/      (render, views)          │
- │   settings.html        → utilities             utils/   (pure helpers)           │
- │                                                                                  │
- │   Persistent state: localStorage (small, hot) + IndexedDB (notes, keys, caches)   │
- └───────────────────────────────────────┬──────────────────────────────────────────┘
-                                         │  fetch() with the USER'S key,
-                                         │  only when the user asks for an AI action
-                                         ▼
-                     Third-party AI provider (user-owned account, CORS-enabled)
+Host (GitHub Pages / python3 -m http.server)
+        │  serves files, does nothing else
+        ▼
+ ┌────────────────────────── Browser ──────────────────────────┐
+ │  index.html ──► styles/*.css (presentation)                 │
+ │             └─► modules/*.js (behaviour)                     │
+ │                      └─► services/*.js (storage + network)   │
+ │                                ├─► localStorage  (user data) │
+ │                                └─► provider API  (BYOK)      │
+ └──────────────────────────────────────────────────────────────┘
 ```
 
-Consequences of "no server" that shape every decision:
+Three consequences that shape everything:
 
-| Reality | Architectural response |
+| Reality | Response |
 | --- | --- |
-| No secrets on the server | BYOK: keys live in the user's browser, encrypted at rest if remembered (`AGENTS.md §7`). |
-| No request proxying | Calls go **browser → provider directly**; the provider must allow CORS. Providers without CORS are unsupported. |
-| No server-side rendering | Every page has a real, crawlable HTML shell; JS enhances it. Content that must be indexed ships in HTML. |
-| No server routing | Hash-based routing (`#/lesson/3`) plus one real HTML file per top-level page. |
-| No server push/sync | Local-first. Everything works offline except explicit AI calls. |
-| Deploys are file copies | Paths must be **relative** so GitHub Pages project sites (`/repo/`) and custom domains both work. |
+| No build step | Files load as written: `<script type="module">`, native CSS, ES modules with `.js` extensions. |
+| Hosted under a sub-path (`/vidyasetu/`) | **Relative paths only** (`./styles/base.css`). Root-absolute paths break on GitHub Pages project sites. |
+| No server to hide anything | Keys are the user's, live in their browser, and go only to the provider they chose. |
 
 ---
 
-## 2. Hosting & Path Contract
-
-- Serving root = repository root. `index.html` sits at the root.
-- **All local asset paths are relative** (`./src/css/base.css`, `../assets/icons/check.svg`).
-  Root-absolute paths (`/src/...`) break GitHub Pages project deployments — banned.
-- No trailing-slash assumptions; links point at explicit files (`notes.html`).
-- HTTPS only (required by Web Crypto, service workers, and most AI provider CORS policies).
-- No redirects, no rewrites, no custom headers. Everything the app needs must be achievable with files.
-- A `404.html` at the root provides the fallback page on GitHub Pages.
-
----
-
-## 3. Folder Structure
-
-Target structure. Files marked `(later)` are planned, not yet created. Do not create empty placeholders.
+## 2. Structure
 
 ```
 /
-├── AGENTS.md                     # rulebook (read-only for agents)
-├── ARCHITECTURE.md               # this file
-├── PROGRESS.md                   # logbook / board
-├── README.md                     # human-facing intro + run instructions
+├── index.html                 # The only page so far: nav, hero, subjects grid, how-it-works/BYOK, footer.
+├── README.md                  # Human-facing intro: what it is, how to serve it, how to contribute content.
 │
-├── index.html                    # Home: welcome, resume-where-you-left-off, quick links
-├── lessons.html                  # Lesson/unit browser (later)
-├── practice.html                 # Quiz + practice runner (later)
-├── notes.html                    # NoteTaker workspace (later)
-├── settings.html                 # API keys, theme, LEDM, data & privacy (later)
-├── 404.html                      # (later)
+├── AGENTS.md                  # The rulebook: constraints, quality bar, workflow, testing, module rules.
+├── ARCHITECTURE.md            # This map: file purposes, data flow, storage schema, extension guides.
+├── PROGRESS.md                # The logbook: what is done, what is in flight, what is next, decisions, bugs.
 │
-├── assets/
-│   ├── icons/
-│   │   ├── src/                  # hand-authored individual SVGs (source of truth)
-│   │   └── sprite.svg            # GENERATED — do not hand-edit
-│   └── img/                      # optimised raster images only (< 40 KB each)
+├── styles/
+│   ├── tokens.css             # Every design value as a CSS custom property: palette, type scale, spacing, radii, shadows, z-index — the only file allowed to contain raw values.
+│   ├── base.css               # Reset, element defaults, typography, link/focus/selection/caret styling, reduced-motion and LEDM query hooks.
+│   ├── layout.css             # Page shell: fixed navbar, container widths, hero, section rhythm, grid definitions, footer, 375px→1280px breakpoints.
+│   ├── components.css         # Reusable blocks: buttons, cards, subject tiles, search field, modal/dialog, toast, badges, SVG icon sizing, all four UI states.
+│   └── scrollbar.css          # Custom scrollbar (track/thumb/hover) for standards browsers and Chromium/Safari, in both themes.
 │
-├── src/
-│   ├── css/
-│   │   ├── reset.css             # modern minimal reset
-│   │   ├── tokens.css            # ALL design tokens (colour, type, space, radii, shadows)
-│   │   ├── base.css              # element defaults, typography, form primitives
-│   │   ├── layout.css            # app shell, grids, containers
-│   │   ├── utilities.css         # .u-* helpers (visually-hidden, stack, cluster)
-│   │   └── components/           # one file per component block
-│   │       ├── button.css
-│   │       ├── card.css
-│   │       ├── quiz-card.css
-│   │       ├── field.css
-│   │       └── toast.css
-│   │
-│   ├── js/
-│   │   ├── main.js               # entry point: boot sequence, page dispatch
-│   │   │
-│   │   ├── core/
-│   │   │   ├── config.js         # APP_NAME, STORAGE_VERSION, PROVIDER_ORIGINS, feature flags
-│   │   │   ├── events.js         # tiny pub/sub event bus
-│   │   │   ├── store.js          # in-memory app state + subscribe/notify
-│   │   │   └── router.js         # hash router for in-page views
-│   │   │
-│   │   ├── modules/
-│   │   │   ├── StorageManager.js # the ONLY module that touches Web Storage / IndexedDB
-│   │   │   ├── BYOKManager.js    # key capture, memory vault, AES-GCM at-rest vault
-│   │   │   ├── APIHandler.js     # provider-agnostic fetch layer (timeout, cancel, retry)
-│   │   │   ├── ProviderRegistry.js # per-provider request/response adapters
-│   │   │   ├── QuizEngine.js     # question flow, grading, attempt history
-│   │   │   ├── NoteTaker.js      # create/edit/search notes (IndexedDB-backed)
-│   │   │   ├── ProgressTracker.js# per-topic mastery, streaks, resume point
-│   │   │   ├── ContentRepository.js # load + cache curriculum JSON
-│   │   │   └── SettingsManager.js# theme, font scale, LEDM, locale; applies to <html>
-│   │   │
-│   │   ├── ui/
-│   │   │   ├── UIRenderer.js     # safe DOM helpers (el, html-tag, patch, mount)
-│   │   │   ├── components/       # reusable widgets (toast.js, dialog.js, key-field.js)
-│   │   │   └── views/            # one module per page: home.js, practice.js, notes.js…
-│   │   │
-│   │   └── utils/
-│   │       ├── dom.js            # $, $$, on, delegate, escape, focus trap
-│   │       ├── crypto.js         # PBKDF2 + AES-GCM wrappers over crypto.subtle
-│   │       ├── validate.js       # schema-ish guards for user + imported data
-│   │       ├── format.js         # dates, durations, marks, pluralisation
-│   │       ├── debounce.js       # debounce/throttle/rafThrottle
-│   │       └── log.js            # levelled logger with secret redaction
-│   │
-│   └── data/
-│       ├── curriculum/
-│       │   └── class9/
-│       │       ├── index.json            # units → lessons manifest
-│       │       └── science-01-matter.json # one file per lesson (schema below)
-│       └── seed/
-│           ├── notes.json                # sample notes shipped so Notes is never empty
-│           └── progress.json             # seeded progress/streak so home looks alive (optional)
+├── modules/
+│   ├── nav.js                 # Fixed-nav behaviour: mobile menu toggle, active-section highlighting via one IntersectionObserver, smooth anchor scrolling with navbar offset.
+│   ├── subjects.js            # Loads ./data/subjects.json, renders the subject grid, and wires live search/filter (with an announced result count and empty state).
+│   ├── settings.js            # Settings/BYOK dialog: provider select, masked key input, save/test/remove with undo, the three key paths, and theme toggle.
+│   └── toast.js               # Tiny pub/sub toast system: notify(message, { variant, actionLabel, onAction, duration }) with an aria-live region and one-at-a-time stacking.
 │
-├── tests/
-│   ├── index.html                # opens the assert runner in a browser
-│   ├── assert.js                 # ~40-line tiny harness (no dependencies)
-│   └── *.test.js                 # unit tests for pure logic (QuizEngine, validators…)
+├── services/
+│   ├── storageService.js      # The only code that touches localStorage: namespaced read/write/remove/list, JSON-safe, quota- and private-mode-aware, never throws raw.
+│   └── byokService.js         # The only code that holds or transmits keys: CRUD, masking, provider registry, test connection, typed errors, redaction. Never logs a key.
 │
-└── scripts/                      # (later) local-only helpers, never shipped behaviour
-    └── build-sprite.sh
+├── data/
+│   ├── subjects.json          # Seeded Class 9 NCERT subjects: id, name, tagline, description, lessonCount, icon id, colour key.
+│   └── lessons/               # (future) One JSON file per lesson, plus an index.json manifest; same schema family as subjects.json.
+│
+└── assets/
+    └── icons/                 # Source .svg files for each icon (name-matched to subjects.json `icon`); inlined into index.html at build-free authoring time.
 ```
 
-Rules implied by the tree:
-
-- `/src` is source. Nothing in `/src` is generated. Nothing outside `/src` is application logic.
-- `/assets` holds binaries and hand-authored SVGs only.
-- `/tests` and `/scripts` are never referenced by shipped pages.
-- One component = one CSS file + (if stateful) one JS module. Co-locate, don't centralise.
+Nothing else exists yet. No `src/`, no `dist/`, no `node_modules/`, no `package.json`.
 
 ---
 
-## 4. Runtime Layers
+## 3. Data flow
 
-Strict layering. **Imports may only point downward.** A cycle is a design bug.
+One direction, always: **input → module → service → storage → re-render**.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ 4. Entry        main.js                                      │  wiring only
-├──────────────────────────────────────────────────────────────┤
-│ 3. UI           ui/views/*  ui/components/*  UIRenderer      │  DOM in, DOM out
-├──────────────────────────────────────────────────────────────┤
-│ 2. Domain       QuizEngine, NoteTaker, ProgressTracker,      │  pure-ish logic,
-│                 ContentRepository, SettingsManager           │  no DOM, no fetch
-├──────────────────────────────────────────────────────────────┤
-│ 1. Platform     StorageManager, BYOKManager, APIHandler,     │  side effects live
-│                 ProviderRegistry, router, events, store       │  ONLY here
-├──────────────────────────────────────────────────────────────┤
-│ 0. Utils        dom, crypto, validate, format, debounce, log │  pure, no imports
-└──────────────────────────────────────────────────────────────┘
+User types in the subject search
+        │
+        ▼
+modules/subjects.js        (oninput handler, debounced ~120ms)
+        │  filters the already-loaded array in memory
+        ▼
+   re-render grid  ──► count announced via aria-live ──► empty state if 0 matches
+
+User saves an API key
+        │
+        ▼
+modules/settings.js        (form submit → validate shape → call service)
+        │
+        ▼
+services/byokService.js    (masked preview, build record)
+        │
+        ▼
+services/storageService.js (write JSON under vs:v1:byok)
+        │
+        ├─ ok      → toast "Key saved" + re-render key row (masked)
+        └─ failure → toast (danger) + revert UI (optimistic rollback)
 ```
 
-- Domain modules receive platform services by **injection** (`createQuizEngine({ storage, events })`), which
-  keeps them testable in `/tests` without a DOM or a network.
-- UI may read the store and call domain functions. UI must **never** call `fetch` or `localStorage`.
-- Utils import nothing from our own tree (except each other in the same tier, one-way).
+Rules the diagram encodes:
+
+- **Modules never touch `localStorage` or `fetch`.** Only `services/*` may. This is checkable with a grep and is
+  the whole point of the split.
+- **Services never touch the DOM.** They return data or throw typed errors; the module decides how to show it.
+- **Rendering is explicit.** No framework, no virtual DOM: modules re-render the specific node they own.
+  Text goes in via `textContent`; nodes via `createElement`/`<template>` clones.
+- **Persistence is immediate and optimistic.** UI updates first, storage write follows, failures roll back.
 
 ---
 
-## 5. Core Modules — Contracts
+## 4. Service contracts
 
-Public API shapes below are the intended contract. Implement them as written unless this file is updated.
-
-### 5.1 `StorageManager.js` — the only door to persistence
-
-**Responsibility:** namespaced, versioned, validated access to `localStorage` + IndexedDB; migrations;
-quota handling; export/import.
+### 4.1 `storageService.js`
 
 ```js
-export async function init()                          // open DB, run migrations
-export function get(key, fallback)                    // sync read of a namespaced localStorage key
-export async function set(key, value)                 // debounced write; throws StorageQuotaError
+export const KEYS = { settings: 'vs:v1:settings', byok: 'vs:v1:byok' };
+
+export function read(key, fallback = null)        // parsed JSON or fallback; corrupt data → logged warn + fallback
+export function write(key, value)                 // → { ok: true } | { ok: false, error: 'quota' | 'blocked' | 'unknown' }
 export function remove(key)
-export function subscribe(key, cb) → unsubscribe
-export async function put(storeName, record)          // IndexedDB
-export async function getRecord(storeName, id)
-export async function getAll(storeName)
-export async function removeRecord(storeName, id)
-export async function exportAll()   → object JSON    // NEVER includes secrets
-export async function importAll(json)                 // validates, merges, migrates
-export async function eraseAll()                      // deletes all cz:* keys + DB; verifies
+export function clearNamespace()                  // removes every vs:* key (used by "erase my data")
+export function isAvailable()                     // false in private mode / storage-blocked contexts
 ```
 
-- Prefixes every key with `cz:v{STORAGE_VERSION}:`.
-- Serialises values as JSON; validates on read and falls back to `fallback` on corrupt data (and logs at `warn`).
-- Handles `QuotaExceededError` by raising a typed error the UI can explain.
-- Never logs values (they may contain user content); logs key names and byte sizes at `debug` only.
+- All keys are namespaced `vs:v1:` and versioned. A schema change bumps the version and adds a migration here.
+- Never throws to callers for expected conditions; returns a result object. Unexpected exceptions are caught and
+  mapped to `{ ok: false, error: 'unknown' }`.
+- Values are JSON. Non-serialisable values are rejected at write time, not silently dropped.
 
-### 5.2 `BYOKManager.js` — key custody
-
-**Responsibility:** capture keys, hold them in memory, optionally encrypt at rest, expose a key *only* to
-`APIHandler` at request time, redact everywhere else.
+### 4.2 `byokService.js`
 
 ```js
-export function addKey({ provider, secret, remember, passphrase }) → Promise<void>
-export function hasKey(provider) → boolean
-export function getKeyForRequest(provider) → string        // throws KeyLockedError / KeyMissingError
-export function listConfigured() → [{ provider, masked, tier, createdAt }]  // never raw keys
-export function mask(secret) → 'abc…9f2a'
-export async function unlock(passphrase)                   // decrypt vault into memory
-export function lock()                                     // drop in-memory plaintext
-export async function removeKey(provider)                  // overwrite + delete
-export async function removeAllKeys()
-export function onLockChange(cb) → unsubscribe
+export const PROVIDERS = [ { id, label, keyHint, docsUrl, origin, test(model, key, signal) } ];
+
+export function listKeys()                 // [{ id, masked: 'sk-…9f2a', addedAt }] — never the raw key
+export function saveKey(id, rawKey)        // validates shape → persists → { ok, masked } | { ok:false, error }
+export function removeKey(id)              // soft-delete for 5s undo window, then hard delete
+export function restoreKey(id)             // used by the Undo action
+export function getKey(id)                 // internal-only plaintext accessor for test(); not exported to modules
+export async function testKey(id, { signal })  // 1-token ping → { ok, latencyMs } | { ok:false, kind }
 ```
 
-- Default tier is **memory only** (`AGENTS.md §7.2`). Nothing is written unless the user opts in.
-- `getKeyForRequest` is the *only* getter that returns plaintext, and only to `APIHandler`.
-- Keys are cleared on `pagehide`. Records live in IndexedDB store `keys` (ciphertext only).
-
-### 5.3 `ProviderRegistry.js` + `APIHandler.js` — the network layer
-
-**Responsibility:** `ProviderRegistry` describes *how to talk to a provider*; `APIHandler` performs the call
-safely. UI never constructs URLs or headers.
-
-```js
-// ProviderRegistry.js
-export const PROVIDERS = {
-  openai: {
-    id: 'openai',
-    label: 'OpenAI',
-    origin: 'https://api.openai.com',
-    keyPattern: /^sk-[A-Za-z0-9_-]{20,}$/,
-    docs: 'https://platform.openai.com/api-keys',
-    models: ['gpt-4o-mini'],
-    buildRequest({ key, model, messages, signal }) → { url, init },
-    parseStream(chunkText) → { delta } | { done: true },
-    classifyError(status, body) → 'auth' | 'rate_limit' | 'quota' | 'bad_request' | 'server' | 'network'
-  }
-  // google, openrouter, groq, anthropic … same shape
-};
-
-export function getProvider(id) → config
-export function listProviders() → config[]
-```
-
-```js
-// APIHandler.js
-export async function chat({ providerId, messages, model, signal, onDelta }) → { text, usage }
-export async function testKey({ providerId }) → { ok, latencyMs, error? }   // 1-token ping
-export function abortAll()
-```
-
-`APIHandler` guarantees, for every provider:
-
-| Guarantee | Implementation |
-| --- | --- |
-| Timeout | `AbortSignal.any([userSignal, AbortSignal.timeout(ms)])`, default 45 s |
-| Cancellation | Caller-supplied `AbortSignal`; aborting surfaces `AbortError` and never a fake failure toast |
-| Retry | Only on `network` and `5xx`, max 2 retries, exponential backoff + jitter. **Never** retry `4xx`. |
-| Key hygiene | Key injected into headers only; never into URLs (some providers accept `?key=` — refused) |
-| Logging | `{ provider, model, status, ms, bytes }` at `debug`; never prompt text, never headers |
-| Error shape | Typed `APIError { kind, message, retryable, providerId }` — UI maps `kind` → human sentence |
-| Streaming | `ReadableStream` + `TextDecoder`; UI paints at most every 120 ms (LEDM) |
-
-### 5.4 `QuizEngine.js`
-
-```js
-export function createQuizEngine({ questions, progress, events })
-  .start(lessonId)            // builds a session (order, shuffling per settings)
-  .current() → { question, index, total }
-  .answer(choiceIndex)        // grades, records attempt, emits 'quiz:answered'
-  .next() / .previous() / .finish()
-  .summary() → { correct, total, accuracy, perTopic }
-```
-
-- Pure grading logic, no DOM. Explanations are content, not generated.
-- Emits `quiz:answered`, `quiz:finished`; `ProgressTracker` listens and persists.
-- Never mutates stored progress directly; goes through `ProgressTracker`.
-
-### 5.5 `NoteTaker.js`
-
-```js
-export function createNoteTaker({ storage })
-  .create({ title, body, topicId }) → Note
-  .update(id, patch) → Note
-  .list({ topicId, query }) → Note[]        // search in-memory over metadata; body on demand
-  .remove(id)                                // soft-delete with 10 s undo window
-  .exportMarkdown() → string
-```
-
-- Notes live in IndexedDB store `notes` (bodies can be large). Autosave debounced 500 ms.
-- No rich text editor. Plain text + Markdown-lite; render through the allowlist renderer only.
-
-### 5.6 `ProgressTracker.js`
-
-```js
-export function createProgressTracker({ storage, events })
-  .recordAttempt({ questionId, correct, topicId, ms })
-  .topicMastery(topicId) → { attempts, correct, mastery }   // 0..1, own formula documented
-  .lastPosition() / .setLastPosition({ page, lessonId })
-  .streak() → { current, longest, lastActiveDay }
-```
-
-### 5.7 `ContentRepository.js`
-
-```js
-export async function listUnits()
-export async function getLesson(lessonId) → Lesson
-export async function prefetchUnit(unitId)                // user-initiated only
-export function clearCache()
-```
-
-- Fetches JSON **only** from `./src/data/curriculum/…` (same origin). Never third-party.
-- Caches parsed lessons in memory; optional Cache API layer in the offline phase.
-- Validates shape before use; a malformed file fails to a friendly error, never a blank screen.
-
-### 5.8 `SettingsManager.js`
-
-```js
-export function init()                       // read stored settings, apply to <html>
-export function get() → Settings
-export function update(patch)                // persists + applies + emits 'settings:changed'
-export function detectLEDM() → boolean
-```
-
-Applies `data-theme`, `.ledm`, and `--font-scale` on `document.documentElement`. This is the **only**
-place that writes to `<html>`.
-
-### 5.9 `store.js`, `events.js`, `router.js`, `UIRenderer.js`
-
-- `store.js`: flat, serialisable app state (`{ settings, session, progressMeta, route }`) with
-  `getState()`, `patch(partial)`, `subscribe(cb)`. It is a cache for rendering, not a source of truth —
-  persisted truth lives in `StorageManager`.
-- `events.js`: `on(name, cb)`, `off`, `emit(name, detail)`, ~25 lines, no wildcards needed. Channel names are
-  namespaced strings: `'storage:changed'`, `'quiz:answered'`, `'api:error'`, `'settings:changed'`.
-- `router.js`: hash routes only. `#/`, `#/lessons`, `#/lesson/:id`, `#/practice/:id`, `#/notes`, `#/settings`.
-  Parse → resolve view module → mount → update `<title>` and focus the new `<h1>`. Unknown route → 404 view.
-- `UIRenderer.js`: `el(tag, props, children)`, `mount(parent, node)`, `patch(node, html)`-free safe updates,
-  `setText(node, text)`, `showToast(msg, kind)`. All text via `textContent`.
+- **`getKey` is not part of the module-facing API.** Modules deal in masked values; only this service reads raw
+  keys, and only when a request is being built.
+- Error kinds: `no-key`, `invalid-key`, `rate-limited`, `network`, `provider-down`. Each maps to one human
+  sentence in the UI layer.
+- Redaction helper lives here and is used before any error message is constructed.
+- Removing a key that is mid-undo does **not** leave a copy in storage after the window closes — that is
+  verified in the self-test (reload after the toast expires).
 
 ---
 
-## 6. Data Flow
+## 5. Module contracts
 
-### 6.1 Boot sequence (`main.js`)
-
-```
-DOMContentLoaded
-  ├─ 1. SettingsManager.init()        read settings, apply theme + LEDM class  (sync, before paint ideally)
-  ├─ 2. StorageManager.init()         open DB, run migrations                    (await)
-  ├─ 3. store.hydrate()               load progress meta, last position          (await, small)
-  ├─ 4. router.start()                resolve route → mount view
-  ├─ 5. view.init()                   bind events, render from state
-  └─ 6. idle work (requestIdleCallback, optional)
-         └─ ContentRepository prefetch of the next lesson
-```
-
-Rules: the shell must render **before** any network/AI work. Boot never blocks on a third-party request.
-If `StorageManager.init()` fails (private mode, corrupted DB), the app continues in **memory-only** mode and
-shows a dismissible notice — it does not white-screen.
-
-### 6.2 Write path — user input → storage → UI
-
-```
-User types in a note
-        │  input event (view layer)
-        ▼
-ui/views/notes.js  ── debounce(500ms) ──►  NoteTaker.update(id, { body })
-                                                │
-                                                ├─► StorageManager.put('notes', record)   [IndexedDB]
-                                                │         │
-                                                │         └─ success → events.emit('storage:changed', {store:'notes'})
-                                                └─► events.emit('note:updated', { id, savedAt })
-                                                          │
-                                                          ▼
-                                              ui: status pill "Saved" (aria-live=polite)
-```
-
-Key properties:
-
-- **UI is updated optimistically** from local state, then reconciled when persistence resolves.
-- Failure is visible: "Not saved — storage full" with a retry action. No silent data loss.
-- `storage:changed` is debounced before triggering re-renders, so a burst of keypresses paints once.
-
-### 6.3 Read path — storage → state → UI
-
-```
-route change (#/practice/12)
-   → router resolves view
-   → view.init(): ProgressTracker.lastPosition(), ContentRepository.getLesson(12)
-   → store.patch({ session: {...} })
-   → UIRenderer builds nodes from state (createElement/textContent, no innerHTML)
-   → document.title + focus the h1
-```
-
-Rendering is **explicit, targeted updates** of the nodes a change affects — no virtual DOM, no full-page
-re-render, no template re-parsing per keystroke.
-
-### 6.4 API path — BYOK request lifecycle
-
-```
-User clicks "Explain this answer"
-        │
-        ▼
-ui/views/practice.js
-        │ 1. hasKey(provider)?  ── no ──► inline prompt: "Add your free key in Settings" (no modal wall)
-        │ 2. set aria-busy, render skeleton-free "Thinking…" line, create AbortController
-        ▼
-APIHandler.chat({ providerId, messages, signal, onDelta })
-        │
-        ├─ BYOKManager.getKeyForRequest(provider)      → plaintext, in memory, request-scoped
-        ├─ ProviderRegistry.buildRequest(...)          → url + headers + body
-        ├─ fetch(url, { headers: { Authorization: `Bearer ${key}` }, signal })
-        │      │
-        │      ├─ 401/403 → APIError('auth')      → "Key rejected. Check it in Settings." + deep link
-        │      ├─ 429     → APIError('rate_limit')→ "Provider limit reached. Try again in Ns."
-        │      ├─ 402/insufficient_quota → 'quota'
-        │      ├─ 5xx     → retry ×2 → then 'server'
-        │      ├─ abort   → silent (user cancelled) — no toast, no state damage
-        │      └─ ok      → stream chunks → onDelta(text) → UI appends text nodes
-        ▼
-UI finalises message, stores chat in memory only (optional opt-in to save as a note)
-```
-
-Hard rules for this path:
-
-- The key is **never** logged, never in the URL, never echoed into the DOM, never included in an error message.
-- The conversation is **not** persisted by default. If the user saves it, it becomes a normal note (local only).
-- The app is fully usable with **zero keys configured** — every non-AI feature works.
-
-### 6.5 Persistence map
-
-| Data | Where | Why |
+| Module | Public surface | Owns |
 | --- | --- | --- |
-| Settings (theme, LEDM, font scale, language) | `localStorage` `cz:v1:settings` | Tiny, needed synchronously at boot to avoid a flash |
-| Profile (display name — optional, local only) | `localStorage` `cz:v1:profile` | Tiny |
-| Progress (per-topic counters, last position, streak) | `localStorage` `cz:v1:progress` | Small JSON, hot |
-| BYOK metadata (provider, tier, masked hint, createdAt — **no secret**) | `localStorage` `cz:v1:byok:meta` | Needed to render Settings instantly |
-| BYOK ciphertext | IndexedDB `keys` | Never in localStorage; ciphertext only |
-| Notes (title + body) | IndexedDB `notes` | Can be large; bodies loaded on demand |
-| Quiz attempt history (capped ring, 500 entries) | IndexedDB `attempts` | Grows; ring-buffered |
-| Curriculum cache (optional, phase 3) | Cache API / IndexedDB `content` | Offline support |
-| Conversation with AI | **memory only** | Privacy default; opt-in to save |
+| `nav.js` | `initNav()` | Mobile menu open/close/Esc/focus return; active-section `aria-current`; anchor scroll offset. |
+| `subjects.js` | `initSubjects()` | Fetch-free rendering from `data/subjects.json`; live search; result count; empty and error states. |
+| `settings.js` | `initSettings()` | Dialog open/close; key form; provider select; test/save/remove; undo wiring; theme toggle. |
+| `toast.js` | `notify(message, opts)`, `initToasts()` | Single `aria-live="polite"` region; one toast at a time; optional action button; timers cleared on teardown. |
 
-Schemas carry a `schemaVersion` field. Any change requires a migration in `StorageManager.init()` and an
-entry in `PROGRESS.md → Decisions`.
+Every module exports one `init*` function and keeps its state in closure scope. No module writes to `window`.
+Each `init*` returns a `destroy()`-style cleanup only if it registers document-level listeners — otherwise it is
+idempotent and guarded against double-init (the "exercise it twice" test in `AGENTS.md §5.1` depends on this).
 
 ---
 
-## 7. API "Routes" — There Are None
+## 6. `index.html` — sections and anchors
 
-**This project has no server and therefore no API routes, no endpoints of its own, no `/api/*`, and no
-webhooks.** Nothing is ever sent to the project's own domain. There is no origin to send it to.
+| Section | `id` | Content |
+| --- | --- | --- |
+| Navbar | `#site-nav` | Logo/link home, Home / Subjects / How It Works / Settings, theme toggle, mobile menu button. |
+| Hero | `#home` | Genuine copy: free forever, no sign-up, no ads, works on cheap phones; primary CTA → `#subjects`. |
+| Subjects | `#subjects` | Search field + grid seeded from `data/subjects.json` (5 Class 9 NCERT subjects, inline SVG icons). |
+| How It Works / BYOK | `#how-it-works` | Three steps, plain-language explanation that AI features use the student's own key, provider list, "Open settings". |
+| Footer | `#footer` | What this is, "no trackers/no cookies" statement, data-ownership line, link to `#how-it-works`. |
 
-All network activity is:
+Nav order matches DOM order, so tab order and visual order agree. Anchor targets get `scroll-margin-top` from
+`--nav-h`; the nav uses `scroll-padding-top` as the belt-and-braces version.
 
-1. **Same-origin static files** — HTML, CSS, JS, JSON curriculum. `fetch('./src/data/...')` with default
-   caching. No credentials (`credentials: 'omit'`).
-2. **Client-side calls to third-party providers, authorised by the user's own key.**
+---
+
+## 7. No server routes
+
+**There are no API routes, no endpoints of ours, no `/api/*`, no webhooks.** Nothing is ever sent to this
+site's origin. Every network request falls into exactly one bucket:
+
+1. **Same-origin static files** — `./data/subjects.json`, CSS, JS, icons. `fetch('./data/subjects.json')`.
+2. **Direct browser → provider, with the user's key** — the only outbound calls that exist:
 
 ```
-Browser ──(user's key)──► https://api.openai.com/…            ← direct, no proxy, no middleman
-Browser ──(user's key)──► https://generativelanguage.googleapis.com/…
-Browser ──(user's key)──► https://openrouter.ai/api/v1/…
-Browser ──(user's key)──► https://api.groq.com/…
+browser ──(Authorization: Bearer <user key>)──► https://<provider-origin>/...   ← no proxy, no middleman
 ```
 
-### 7.1 Provider registry (initial, phase 4)
+Provider registry (verify CORS and endpoints against current docs before implementing each one):
 
 | Provider id | Origin | Notes |
 | --- | --- | --- |
-| `openai` | `https://api.openai.com` | OpenAI-compatible chat completions; CORS allowed |
-| `google` | `https://generativelanguage.googleapis.com` | Gemini; free tier available; key in query is **refused by us** — use the header form where supported |
-| `openrouter` | `https://openrouter.ai` | Many models, including free ones; single key |
-| `groq` | `https://api.groq.com` | Fast/cheap, free tier |
-| `anthropic` | `https://api.anthropic.com` | Requires `anthropic-dangerous-direct-browser-access` header for browser use |
+| `google` | `https://generativelanguage.googleapis.com` | Gemini free tier; key sent in a header, never in the query string. |
+| `groq` | `https://api.groq.com` | Fast, free tier, OpenAI-compatible chat shape. |
+| `openrouter` | `https://openrouter.ai` | One key, many models including free ones. |
+| `openai` | `https://api.openai.com` | OpenAI-compatible; paid tier only. |
 
-Exact endpoints, headers, and model ids are **verified at implementation time** against each provider's
-current docs; `ProviderRegistry.js` is the single place to change them. Adding a provider requires updating
-`PROVIDER_ORIGINS` in `config.js` **and** the CSP `connect-src` list in every HTML head, in the same commit.
-
-### 7.2 CORS reality check
-
-Because the browser calls the provider directly:
-
-- Providers that do not send `Access-Control-Allow-Origin` for our origin cannot be supported. Their absence
-  is a hard technical limit, not a bug — the "Configure" screen says so plainly.
-- A custom `Authorization` header triggers a preflight `OPTIONS`. The provider must allow the headers we send
-  (`authorization`, `content-type`) — verified per provider before shipping the adapter.
-- No `mode: 'no-cors'` (opaque responses are useless and hide failures).
-- No credentials/cookies to providers; keys only, in headers.
-
-### 7.3 What we deliberately do **not** build
-
-- No key-relay endpoint ("for your convenience, paste your key into our proxy") — that would be a free
-  credential-harvesting service.
-- No shared/free pooled key. Users always bring their own.
-- No server-side caching of AI responses.
-- No usage tracking or cost dashboards that require sending prompts anywhere.
+Non-negotiables: no proxy or relay (that would be a credential-harvesting service), no `mode: 'no-cors'`,
+no key in a URL, `AbortSignal` on every request with a timeout, and a typed error for every failure branch.
+A provider whose CORS policy blocks browser calls simply is not offered — and the UI says why, plainly.
 
 ---
 
-## 8. Rendering Strategy
+## 8. Storage schema
 
-- **HTML shells are real HTML.** Each page contains its landmarks, headings, and static content. JS enhances.
-  A page must remain readable (if not interactive) with JS disabled or still loading.
-- **Build DOM nodes, don't re-parse strings.** `UIRenderer.el()` + `<template>` cloning.
-  `innerHTML` is banned for any interpolated data (`AGENTS.md §3.3`).
-- **No virtual DOM.** Views keep references to the nodes they own and update them in place.
-- **State → view is one-way.** Views never mutate `store` directly; they call domain functions, which update
-  state and emit events; subscribers re-render the affected nodes.
-- **Lists are bounded.** Render ≤ 50 rows at a time; "Load more" or windowing beyond that.
-- **Event delegation** on the container for lists, not one listener per row.
-- **Images**: `width`/`height` always set, `loading="lazy"` below the fold, `srcset` only where it saves bytes.
-- **Four states per view, always.** Every view module exposes `renderLoading()`, `renderEmpty()`,
-  `renderError(err)`, and its success render. A view that can fetch or save but has no empty/error branch is
-  incomplete (`AGENTS.md` → Quality Bar).
-- **Lazy below the fold.** Sections render on approach (`content-visibility: auto` where safe, else an
-  IntersectionObserver that mounts once). The first viewport is the only thing built eagerly.
-- **Progressive enhancement ladder**: HTML + CSS works → JS adds interactivity → AI features add convenience.
+| Key | Owner | Shape | Why |
+| --- | --- | --- | --- |
+| `vs:v1:byok` | `byokService.js` | `{ [providerId]: { key, addedAt } }` | BYOK keys (constraint C2). Only this record; no duplicates elsewhere. |
+| `vs:v1:settings` | `settings.js` → `storageService` | `{ theme: 'light' or 'dark' or 'system', ledm: boolean }` | Needed synchronously on load to avoid a theme flash. |
+| `vs:v1:notes` | (Session 1, `noteService`) | `{ [noteId]: { title, body, topicId, updatedAt } }` | Small text notes; migrate to IndexedDB only if they approach quota. |
+
+Rules: namespaced and versioned; JSON only; written exclusively by services; corrupted values fall back safely;
+`clearNamespace()` exists so "erase my data" is real.
 
 ---
 
-## 9. Routing
-
-| Route | File / view | Purpose |
-| --- | --- | --- |
-| `index.html` | `ui/views/home.js` | Welcome, resume, quick actions |
-| `index.html#/lessons` | `ui/views/lessons.js` | Unit/lesson browser |
-| `index.html#/lesson/:id` | `ui/views/lesson.js` | Lesson reader |
-| `index.html#/practice/:id` | `ui/views/practice.js` | Quiz runner |
-| `#/notes` | `ui/views/notes.js` | Notes workspace |
-| `#/settings` | `ui/views/settings.js` | Keys, appearance, data |
-| anything else | `ui/views/not-found.js` | Friendly recovery links |
-
-- Hash routing only — static hosts cannot rewrite paths. (One real HTML file per *page* if a page grows large
-  enough to deserve its own URL and its own `<title>`; the hash handles in-page views.)
-- Router responsibilities: parse, guard (a lesson route with an unknown id → not-found view), mount, update
-  `document.title` from the view's `title`, move focus to the `<h1>`, scroll to top, announce route change.
-- Back/forward must work for every in-app navigation (never `history.pushState` behind a stale view).
-- Deep links are shareable and must survive a cold load (route parsed after boot, not before).
-
----
-
-## 10. Error Handling & Observability (local only)
-
-- **Typed errors** over strings: `StorageQuotaError`, `KeyLockedError`, `KeyMissingError`,
-  `APIError { kind, retryable }`, `ContentError`. UI maps type → human sentence + next action.
-- **Three severities at the UI level:** recoverable inline notice, blocking panel (with a way out), silent
-  abort (user-initiated cancel).
-- **Local error ring buffer** (last 20 errors, no payloads, no keys) in memory, viewable via
-  `?debug=1 → Diagnostics`. Never uploaded.
-- **Never** let an exception produce a blank page: `window.onerror` / `unhandledrejection` handlers show a
-  "Something broke — reload / reset data" panel.
-- **No** third-party error reporting, ever (`AGENTS.md §2.2`).
-
----
-
-## 11. Offline & PWA (phase 3 — not yet)
-
-Planned, deliberately deferred until the core flows work:
-
-- `manifest.webmanifest` + inline SVG icons; `display: standalone`, `theme_color` from tokens.
-- Hand-written `service-worker.js` (no Workbox): precache the shell; network-first for curriculum JSON;
-  cache-first for icons/CSS; **never** cache provider API responses or anything with an `Authorization` header.
-- Version constant injected at the `// === GENERATED: VERSION ===` marker; old caches deleted on `activate`.
-- "Update available" toast; never force-reload mid-task.
-
----
-
-## 12. Curriculum Content Schema
-
-Content is data, authored per lesson, and validated by `ContentRepository`. Reference shape:
+## 9. `data/subjects.json`
 
 ```json
 {
   "schemaVersion": 1,
-  "id": "science-01-matter",
   "class": 9,
-  "subject": "science",
-  "unit": "matter-around-us",
-  "title": "Matter in Our Surroundings",
-  "lang": "en",
-  "estimatedMinutes": 12,
-  "objectives": ["State the properties of particles of matter"],
-  "sections": [
-    { "type": "text", "md": "Particles of matter are very small…" },
-    { "type": "callout", "variant": "note", "md": "Remember: …" },
-    { "type": "formula", "tex": "p = F/A", "alt": "pressure equals force over area" }
-  ],
-  "questions": [
+  "board": "NCERT",
+  "subjects": [
     {
-      "id": "q1",
-      "type": "single",
-      "prompt": "Which state of matter is most compressible?",
-      "options": ["Solid", "Liquid", "Gas", "Plasma"],
-      "answerIndex": 2,
-      "explain": "Gas particles are far apart, so they compress easily."
+      "id": "mathematics",
+      "name": "Mathematics",
+      "tagline": "Numbers, shapes, and the reasoning behind them",
+      "description": "Real NCERT Class 9 chapters — from number systems and polynomials to circles, surface areas and statistics.",
+      "lessonCount": 12,
+      "icon": "icon-math",
+      "hue": "indigo",
+      "available": true
     }
-  ],
-  "topicTags": ["states-of-matter"]
+  ]
 }
 ```
 
-- **Seeded content is mandatory.** The repository ships enough real content that the app looks and behaves like
-  a finished product on first load: ≥ 1 complete lesson with questions and explanations, a handful of sample
-  notes (`src/data/seed/notes.json`), and a home screen that is not empty. No lorem ipsum, no "coming soon".
-- No HTML in content. Markdown-lite only, rendered through the allowlist renderer.
-- `answerIndex` maybe shuffled at runtime for display; the canonical answer stays in the data.
-- Media referenced by relative path under `/assets`; every file < 40 KB unless it is audio.
+- Five entries, real copy, real NCERT chapter counts. `hue` maps to a token colour, never a raw hex.
+- `available: false` renders a "coming soon" state honestly rather than a dead link — and says when.
+- Lesson files (later) live in `data/lessons/<subject-id>-<nn>-<slug>.json`, registered in `index.json`.
 
 ---
 
-## 13. Testing Without a Build Step
+## 10. Rendering, state and accessibility contract
 
-- `tests/index.html` loads `assert.js` + `*.test.js` as modules and prints pass/fail. No runner, no config,
-  no install. Open the file, read the page.
-- Unit-test the **pure** layers: `QuizEngine` grading, `validate.js`, `format.js`, mastery maths,
-  provider `parseStream`/`classifyError` adapters (with recorded fixtures).
-- Manual QA matrix per release: 320 px / 200 % zoom / keyboard-only / reduced-motion / dark theme / LEDM /
-  Safari private mode / offline after first load / invalid API key / expired key / aborted request.
-- Nothing in the shipped site imports from `/tests`.
-
----
-
-## 14. Extension Guides
-
-Every guide below is an implementation sequence, not permission to start. Any of them that is bigger than a
-trivial tweak goes through the **Workflow Protocol** in `AGENTS.md` first: post the plan, get `Approved`, then
-execute.
-
-**Add a page**
-1. Create `src/js/ui/views/<name>.js` exporting `init(rootEl)`.
-2. Add the route (or a new HTML shell if it needs its own URL/`<title>`).
-3. Add a component CSS file if it introduces a new block; import nothing new at the top level.
-4. Update `PROGRESS.md`.
-
-**Add a provider**
-1. Add a config block to `ProviderRegistry.js` (`buildRequest`, `parseStream`, `classifyError`, `keyPattern`).
-2. Add its origin to `PROVIDER_ORIGINS` **and** the CSP `connect-src` in every HTML head.
-3. Verify CORS with a real preflight against a real key; record the result in `PROGRESS.md → Decisions`.
-4. Add a fixture-based test for `classifyError`.
-
-**Add a lesson**
-1. Add JSON under `src/data/curriculum/class9/`.
-2. Register it in `index.json`.
-3. Validate against `§12`; check the file size budget.
-
-**Add a persisted field**
-1. Add it to the schema + `STORAGE_VERSION` migration if the shape changes.
-2. Read/write only through `StorageManager`; test the migration with an old fixture.
-3. Update `PROGRESS.md → Decisions`.
+- **Four states per dynamic area:** loading (inline text, no layout jump), empty (explains the next action),
+  error (what failed + retry), success. Built in CSS and in the module, not implied.
+- **No `innerHTML` with data.** `textContent` for strings, `createElement`/`<template>` for structure.
+- **No layout thrash:** read phase then write phase; no `getBoundingClientRect()` inside a mutating loop.
+- **Animation:** `transform`/`opacity` only, ≤ 300 ms, stagger ≤ 60 ms, fully disabled under
+  `prefers-reduced-motion: reduce` and under `<html class="ledm">`.
+- **Accessibility is structural:** landmarks, one `h1`, labelled inputs, `aria-expanded` on the menu, Esc to
+  close dialogs, focus returned to the trigger, `aria-live` for results and toasts, 3:1 focus ring at 2 px offset.
+- **Touch targets ≥ 44×44 px**, verified at 375 px.
 
 ---
 
-## 15. Open Questions (to resolve with the human)
+## 11. Extension guides
 
-1. **Name & branding** — "ClassZero" is a placeholder; the display name lives only in `config.js → APP_NAME`.
-2. **Subjects** — start with Science only, or Science + Maths + Social Science at once?
-3. **Language** — English-only first, or English + Hindi from day one? (Impacts copy and layout width.)
-4. **Content source** — who authors lesson JSON, and against which syllabus (NCERT, CBSE, state board)?
-5. **AI tutor scope** — free-form chat (cost risk on the user's key) vs. fixed "explain this / give me a
-   hint / quiz me" actions (predictable, cheap, better prompts)? Recommendation: fixed actions first.
+**Add a subject** → append to `data/subjects.json`, add an icon to `assets/icons/`, inline it in `index.html`.
+No JS change (the grid renders whatever the JSON says).
+
+**Add a lesson** (Session 1+) → add `data/lessons/<id>.json`, register it in `data/lessons/index.json`, render via
+the lesson module. Content only; no new storage keys.
+
+**Add a section to the home page** → new `<section id="…">` in `index.html`, a nav link, layout rules in
+`layout.css`. The nav's IntersectionObserver picks it up automatically — never hardcode the section list twice.
+
+**Add a provider** → one entry in `PROVIDERS` in `byokService.js` **and** its origin in the CSP `connect-src`
+in the same commit; verify CORS with a real key before shipping; add an error-mapping case.
+
+**Add a page** (later) → new `.html` plus its own module; keep `styles/` shared, keep relative paths, and give
+each page its own CSP copy.
+
+Any of these larger than a trivial tweak goes through the Workflow in `AGENTS.md §4`: plan first, then
+"Approved".
