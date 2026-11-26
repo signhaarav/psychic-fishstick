@@ -178,11 +178,11 @@ export function listKeys()                 // [{ id, masked: 'sk-…9f2a', added
 export function saveKey(id, rawKey)        // validates shape → persists → { ok, masked } | { ok:false, error }
 export function removeKey(id)              // soft-delete for 5s undo window, then hard delete
 export function restoreKey(id)             // used by the Undo action
-export function getKey(id)                 // internal-only plaintext accessor for test(); not exported to modules
+function getRawKey(id)                     // private: plaintext accessor used only by testKey(); never exported
 export async function testKey(id, { signal })  // 1-token ping → { ok, latencyMs } | { ok:false, kind }
 ```
 
-- **`getKey` is not part of the module-facing API.** Modules deal in masked values; only this service reads raw
+- **`getRawKey` is private and not exported.** Modules deal in masked values; only this service reads raw
   keys, and only when a request is being built.
 - Error kinds: `no-key`, `invalid-key`, `rate-limited`, `network`, `provider-down`. Each maps to one human
   sentence in the UI layer.
@@ -219,7 +219,7 @@ Rules every module follows:
 
 | Section | `id` | Content |
 | --- | --- | --- |
-| Navbar | `#site-nav` | Logo/link home, Home / Subjects / How It Works / Settings, theme toggle, mobile menu button. |
+| Navbar | `#site-nav` | Logo/link home, Home / Subjects / How It Works, Settings button (opens the dialog), mobile menu button. |
 | Hero | `#home` | Genuine copy: free forever, no sign-up, no ads, works on cheap phones; primary CTA → `#subjects`. |
 | Subjects | `#subjects` | Search field + grid seeded from `data/subjects.json` (5 Class 9 NCERT subjects, inline SVG icons). |
 | How It Works / BYOK | `#how-it-works` | Three steps, plain-language explanation that AI features use the student's own key, provider list, "Open settings". |
@@ -255,6 +255,33 @@ Non-negotiables: no proxy or relay (that would be a credential-harvesting servic
 no key in a URL, `AbortSignal` on every request with a timeout, and a typed error for every failure branch.
 A provider whose CORS policy blocks browser calls simply is not offered — and the UI says why, plainly.
 
+### 7.1 Verified API facts
+
+Kept deliberately honest: this section records only what has been **observed**, never what is merely documented.
+
+**Verified (2026-11-26, Node with stubbed `fetch`, no live network):**
+
+- The key is placed in a header, never in the URL — asserted for Groq (`Authorization: Bearer …`) and Gemini
+  (`x-goog-api-key`).
+- Requests use `credentials: 'omit'` and an `AbortSignal` with a 12 s timeout.
+- Status mapping: `400/401/403 → invalid-key`, `429 → rate-limited`, `5xx → provider-down`,
+  thrown `fetch` → `network`, timeout → `timeout`.
+- The CSP `connect-src` list and `PROVIDERS[].origin` are identical (4 origins); no request builds a host
+  outside that list.
+
+**Not verified — do not assume any of these work:**
+
+| Fact | Status |
+| --- | --- |
+| Any provider answers a browser-origin request (CORS preflight for `authorization`, `content-type`) | **Unknown** — no live call was made |
+| Model ids (`gemini-2.0-flash`, `llama-3.1-8b-instant`, `meta-llama/llama-3.1-8b-instruct:free`, `gpt-4o-mini`) are current | **Unknown** |
+| Free-tier availability and rate limits per provider | **Unknown** |
+| Each provider's exact auth header still matches its docs | **Unknown** |
+
+To verify: open Settings, save a real key, press **Test**, and record the result (provider, date, outcome) in
+this table. If a provider blocks browser requests, delete its entry from `services/providers.js` **and** its CSP
+origin in the same commit.
+
 ---
 
 ## 8. Storage schema
@@ -262,7 +289,7 @@ A provider whose CORS policy blocks browser calls simply is not offered — and 
 | Key | Owner | Shape | Why |
 | --- | --- | --- | --- |
 | `vs:v1:byok` | `byokService.js` | `{ [providerId]: { key, addedAt } }` | BYOK keys (constraint C2). Only this record; no duplicates elsewhere. |
-| `vs:v1:settings` | `settings.js` → `storageService` | `{ theme: 'light' or 'dark' or 'system', ledm: boolean }` | Needed synchronously on load to avoid a theme flash. |
+| `vs:v1:settings` | `theme.js` → `storageService` | `{ theme: 'light' or 'dark' or 'system', ledm: boolean }` | Needed synchronously on load to avoid a theme flash. |
 | `vs:v1:notes` | (Session 1, `noteService`) | `{ [noteId]: { title, body, topicId, updatedAt } }` | Small text notes; migrate to IndexedDB only if they approach quota. |
 
 Rules: namespaced and versioned; JSON only; written exclusively by services; corrupted values fall back safely;

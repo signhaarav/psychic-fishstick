@@ -16,19 +16,19 @@
 
 ## 1. Completed
 
-| ID | Item | Verified how |
-| --- | --- | --- |
-| S0-1 | `AGENTS.md` — constraints, quality bar, visual identity, workflow, self-testing, session hygiene, modular rules, do-not-touch, security, DoD | reviewed against the brief |
-| S0-2 | `ARCHITECTURE.md` — structure with one-sentence file purposes, data flow, service/module contracts, storage schema, no-server-routes | matches shipped tree (checked file by file) |
-| S0-3 | `PROGRESS.md` — this file | — |
-| S0-4 | Phase 2 plan → approved → executed | plan in session log, code in commit |
-| P2-1 | `data/subjects.json` — 5 subjects, 12 books, **72 real NCERT chapter titles**, syllabus note | JSON parses; counts derived, not typed |
-| P2-2 | `styles/` — tokens, base, layout, nav, sections, components, cards, states, dialog, toast, scrollbar | 11 files, all ≤ 200 lines, no raw values outside `tokens.css` |
-| P2-3 | `index.html` — skip link, fixed nav, hero, subject browser, how-it-works/BYOK, footer, settings dialog, toast host, SVG sprite, CSP | 196 lines, every referenced path returns 200 |
-| P2-4 | `modules/` — nav, subjects, subjectPanel, settings, keyList, theme, toast, dom | 8 files; grammar-checked; no fetch/storage |
-| P2-5 | `services/` — storageService, byokService, providers, contentService | 26/26 behavioural checks in Node (below) |
-| P2-6 | Custom scrollbars, gradients, staged entrance, reduced-motion + LEDM | CSS-only; `prefers-reduced-motion` collapse in `base.css` |
-| P2-7 | Self-test pass + docs + commit | see §6 |
+| ID | Item | Date | Commit | Verified how |
+| --- | --- | --- | --- | --- |
+| S0-1 | `AGENTS.md` — constraints, quality bar, visual identity, workflow, self-testing, session hygiene, modular rules, do-not-touch, security, DoD | 2026-11-26 | `00be123` | reviewed against the brief |
+| S0-2 | `ARCHITECTURE.md` — structure with one-sentence file purposes, data flow, contracts, storage schema, no-server-routes, verified API facts | 2026-11-26 | `00be123` | matches shipped tree, checked file by file |
+| S0-3 | `PROGRESS.md` — this file | 2026-11-26 | `00be123` | — |
+| P2-1 | `data/subjects.json` — 5 subjects, 12 books, **72 real NCERT chapter titles**, syllabus note | 2026-11-26 | `825306d` | JSON parses; counts derived by `countChapters()`, not typed |
+| P2-2 | `index.html` — skip link, fixed nav, hero, subject browser, how-it-works/BYOK, footer, settings dialog, toast host, SVG sprite, CSP | 2026-11-26 | `825306d` | 196 lines; 16/16 assets return 200 |
+| P2-3 | `styles/` — 11 files: tokens, base, layout, nav, sections, components, cards, states, dialog, toast, scrollbar | 2026-11-26 | `825306d` | all ≤ 200 lines; no raw value outside `tokens.css` |
+| P2-4 | `modules/` — nav, subjects, subjectPanel, settings, keyList, theme, toast, dom | 2026-11-26 | `825306d` | 8 files parse as ESM; no fetch/storage |
+| P2-5 | `services/` — storageService, byokService, providers, contentService | 2026-11-26 | `825306d` | **32/32** behavioural checks (§6) |
+| P2-6 | Custom scrollbars, gradients, staged entrance, reduced-motion + LEDM | 2026-11-26 | `825306d` | CSS-only; motion audit clean |
+| S0-5 | Close-out: constraint audit, lazy below-fold (`C-01`), transform-only motion (`C-02`), `.nav__label` (`C-03`) | 2026-11-26 | `c2b126f` | see §4 and §6 |
+| S0-6 | Close-out round 2: contracts audit, CSP↔registry equality, docs accuracy, this report | 2026-11-26 | *(this commit)* | §6 |
 
 ---
 
@@ -42,21 +42,23 @@ and say plainly that lessons arrive next session. That is the only "not yet" sur
 
 ---
 
-## 3. Next — Session 1
+## 3. Next — exactly one task
 
-**Lesson viewer + notes.** Preconditions: Phase 2 accepted by the owner.
+**Session 1 — Lesson viewer.** Open one real lesson from the subject panel and read it: `data/lessons/` +
+`index.json` + `modules/lesson.js`, with a route from a chapter. Notes are deliberately **not** part of this
+task; they follow as their own task once the viewer is verified.
 
-1. `data/lessons/index.json` + one complete real lesson (sections, worked example, practice set, explanations).
-2. `modules/lesson.js` (view) + `services/noteService.js` (notes CRUD, `vs:v1:notes`).
-3. Route from a chapter in the panel → lesson; remember last-read position.
-4. Notes: create/edit/delete per lesson, autosave debounced, Undo on delete.
-5. Replace the "Lessons in Session 1" chip with an honest state that reflects what exists.
+Acceptance for that task: one complete real lesson (sections, worked example, practice set with explanations),
+reachable from its chapter, zero console errors, 375/1280 clean, and the "Lessons in Session 1" chip replaced
+with a state that reflects what actually exists.
+
+Status: **not started, awaiting "Approved"** (`AGENTS.md §4` — plan first).
 
 ---
 
 ## 4. Known bugs
 
-**None open.**
+**None open** (0 known bugs at close-out; nothing deferred, nothing worked-around).
 
 Fixed during this build, before the commit (recorded so the same mistakes are not repeated):
 
@@ -93,11 +95,13 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 - All 17 first-load requests return **200**; zero 404s (`python3 -m http.server` + request sweep).
 - All 12 JS files **parse as ES modules** (`node --check` on `.mjs` copies).
 - `data/subjects.json` parses; counts (5 subjects / 12 books / 72 chapters) derived from the file.
-- **Service smoke test, 26/26 passing** in Node with stubbed storage and `fetch`: storage round-trip, corrupt-JSON
+- **Service tests, 32/32 passing** in Node with stubbed storage and `fetch`: storage round-trip, corrupt-JSON
   fallback, unserialisable write rejected, namespace-scoped clear; key validation (`too-short`, `has-space`,
   `unknown-provider`), masking, save → list (masked only) → remove → restore; `testKey` for 200 / 401 / 429 / 503 /
-  network throw / no-key; **key travels in a header, never the URL**; Gemini adapter header check; and a
-  **console-leak assertion** confirming no key material reached any log call.
+  network throw / no-key; **key travels in a header, never the URL**; Gemini adapter header check; a
+  **console-leak assertion** confirming no key material reached any log call; and `contentService` against the real
+  `subjects.json` (5 subjects, 72 chapters, 12 books, every icon/hue/description present) plus malformed / 404 /
+  network failure mapping.
 - Greps: no inline handlers, no inline styles, no `innerHTML`/`eval`/`document.write`, no `console.log`, no
   TODO/FIXME/lorem/"coming soon", no `href="#"`, no default-gray literals outside `tokens.css`, no absolute-root
   paths, and no `fetch`/`localStorage` anywhere in `modules/`.
@@ -114,6 +118,11 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 - **Constraint audit C1–C6:** no `package.json`/`node_modules`, all imports relative, no external `<link>`/`<script>`,
   zero `@font-face`, `localStorage` only inside `services/`, no key-shaped literals in shipped files, no
   root-absolute paths, 1 `h1`, 4 landmarks, 5/5 form controls labelled, skip link + `:focus-visible` present.
+- **CSP ↔ registry equality:** the four `connect-src` origins match `PROVIDERS[].origin` exactly, and no
+  `buildRequest` creates a host outside that list.
+- **Contract audit:** exported service surface unchanged from what `ARCHITECTURE.md §4` documents — one correction
+  made to the doc, not the code (`getKey` → private `getRawKey`). Storage keys unchanged: `vs:v1:byok`,
+  `vs:v1:settings`. JSON schema unchanged (`schemaVersion: 1`).
 
 **Not performed — do not assume these pass:**
 
@@ -149,6 +158,8 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 | D-15 | Lazy loading is CSS-only (`content-visibility: auto`) | Satisfies C5 with no JS, no IntersectionObserver, no layout shift; the browser skips layout and paint for off-screen blocks. |
 | D-16 | Hover colour changes are instant; transitions are `transform` only | Strict reading of C5. Colour fades are not worth a paint on a 2-thread device. |
 | D-17 | Weight is measured through the import graph, not the `<script>` tags | The first honest number is 26 requests / 85.9 KB; the earlier 17-request figure was wrong and is corrected in §6. |
+| D-18 | **`AGENTS.md` left untouched** during close-out, even though the close-out protocol is not yet in it | `AGENTS.md §8` protects its protocol sections and the close-out rule itself says AGENTS.md changes need explicit approval. The protocol currently lives in the conversation only; codifying it in §5 is a one-line ask away. |
+| D-19 | Session 1 scope cut to **lesson viewer only**, notes moved to the following task | The close-out protocol requires exactly one next task; a viewer+notes bundle would have been two. |
 
 ---
 
