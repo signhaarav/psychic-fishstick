@@ -96,6 +96,7 @@
 }
 
 .seg__label {
+  border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,7 +107,6 @@
   font-size: var(--fs-xs);
   font-weight: 600;
   cursor: pointer;
-  transition: transform var(--dur-1) var(--ease);
 }
 
 .seg__input:hover + .seg__label {
@@ -116,6 +116,8 @@
 .seg__input:checked + .seg__label {
   background: var(--surface);
   color: var(--ink);
+  /* C-08: the raised pill alone was 1.10:1 from the track; the ring is 3.76:1 */
+  border-color: var(--line-control);
   box-shadow: var(--shadow-1);
 }
 

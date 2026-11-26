@@ -101,6 +101,9 @@ Found during the redesign (all fixed before the commit):
 | B-08 | P2 | At 320–375 px the theme segmented control could overflow its row, and the key input could refuse to shrink beside the Show button | Stack the theme row under 30rem; `min-width: 0` on the field |
 | C-04 | C5 / hygiene | Dead CSS after the rewrite: `chip`, `chip--accent`, `chip--warning`, `iconbtn`, `switch__text`, `set-row--stack`, `.stack`, `.divider` | Removed; the class-coverage audit now reports no dead rules |
 | C-05 | §7 line cap | Four files exceeded 200 lines after first draft (components 326, cards 218, index 203, subjects 205) | Split into `controls.css`, `chapters.css`, `subjectRow.js`; largest file now 199 lines |
+| C-06 | **C5** — motion on transform/opacity only | A `transition: border-color` came back with the new `.field__control` | Removed; every transition in `styles/` is `transform` again (5 rules, all verified by grep) |
+| C-07 | **C6** — 1.4.11 non-text contrast | The search field used `border-color: transparent` on a `--sunken` fill: its boundary was **1.10:1** against the page | Border is `--line-control` — **3.42:1** against the fill, 3.64:1 against the page (dark 3.66 / 3.83) |
+| C-08 | **C6** — 1.4.11 non-text contrast | The selected theme segment was a white pill on a `--sunken` track: **1.10:1** light, **1.04:1** dark — the selected state was not perceivable | Checked label carries a `--line-control` ring — **3.76:1** light, 3.53:1 dark. A filled control is never its own boundary |
 
 ---
 

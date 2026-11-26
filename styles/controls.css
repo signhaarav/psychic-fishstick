@@ -23,7 +23,6 @@
   background: var(--surface);
   color: var(--ink);
   font-size: var(--fs-md);
-  transition: border-color var(--dur-1) var(--ease);
 }
 
 .field__control::placeholder {
@@ -92,7 +91,8 @@ select.field__control {
   border-radius: var(--r-pill);
   padding-inline: var(--sp-4);
   background: var(--sunken);
-  border-color: transparent;
+  /* C-07: a filled pill is not a boundary — --line-control is 3.42:1 against this fill */
+  border-color: var(--line-control);
 }
 
 .field--search .field__control:focus-visible {

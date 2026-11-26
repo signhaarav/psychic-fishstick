@@ -373,8 +373,9 @@ Rules: namespaced and versioned; JSON only; written exclusively by services; cor
 - **Design values are tokens.** Raw colour, radius, shadow, duration and spacing values exist only in
   `tokens.css`; both palettes and the LEDM overrides are declared there.
 - **Contrast is computed, not eyeballed.** Light: ink 18.1:1, ink-2 9.7:1, ink-3 5.7:1, white-on-accent 6.3:1,
-  accent on `--accent-weak` 7.0:1, control border 3.76:1. Dark: ink 17.7:1, ink-2 12.1:1, ink-3 7.5:1,
-  on-accent 9.2:1, accent 9.0:1, control border 3.53:1.
+  accent on `--accent-weak` 7.0:1, control border 3.76:1 (search pill 3.42:1 against its own fill, selected
+  segment ring 3.76:1). Dark: ink 17.7:1, ink-2 12.1:1, ink-3 7.5:1, on-accent 9.2:1, accent 9.0:1, control
+  border 3.53:1 (search pill 3.66:1, segment ring 3.53:1). A filled control is never its own boundary.
 - **Motion is `transform`/`opacity` only**, ≤ 240 ms, no colour transitions; fully disabled under
   `prefers-reduced-motion: reduce` and `<html class="ledm">`.
 - **Touch targets ≥ 44 px**: tab bar 52 px, list rows 56 px, every button and input at least 44 px tall.
