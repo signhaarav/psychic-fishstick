@@ -23,7 +23,7 @@ export function applyTheme(theme) {
   const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
   root.setAttribute('data-theme', resolved);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#131a38' : '#0e1433');
+  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0b0d12' : '#fbfbfd');
 }
 
 /** Heuristic for weak hardware or a user asking to save data. */

@@ -3,193 +3,196 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>VidyaSetu — free Class 9 NCERT lessons, forever</title>
-  <meta name="description" content="Free, unlimited Class 9 NCERT lessons for Mathematics, Science, Social Science, English and Hindi. No sign-up, no ads, no trackers — and AI help that runs on your own key.">
-  <meta name="theme-color" content="#0e1433">
+  <title>VidyaSetu — your Class 9 workspace</title>
+  <meta name="description" content="Free, unlimited NCERT Class 9 lessons for Mathematics, Science, Social Science, English and Hindi. No sign-up, no ads, no trackers — and AI help that runs on your own key.">
+  <meta name="theme-color" content="#fbfbfd">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com https://openrouter.ai https://api.openai.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
   <link rel="icon" href="./assets/icons/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles/tokens.css">
   <link rel="stylesheet" href="./styles/base.css">
-  <link rel="stylesheet" href="./styles/layout.css">
-  <link rel="stylesheet" href="./styles/nav.css">
-  <link rel="stylesheet" href="./styles/sections.css">
+  <link rel="stylesheet" href="./styles/shell.css">
   <link rel="stylesheet" href="./styles/components.css">
+  <link rel="stylesheet" href="./styles/controls.css">
+  <link rel="stylesheet" href="./styles/sections.css">
   <link rel="stylesheet" href="./styles/cards.css">
+  <link rel="stylesheet" href="./styles/chapters.css">
   <link rel="stylesheet" href="./styles/states.css">
-  <link rel="stylesheet" href="./styles/dialog.css">
+  <link rel="stylesheet" href="./styles/settings.css">
   <link rel="stylesheet" href="./styles/toast.css">
   <link rel="stylesheet" href="./styles/scrollbar.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <header class="nav" id="site-nav">
-    <div class="container nav__inner">
-      <a class="nav__brand" href="#home">
-        <svg class="nav__brand-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-logo"></use></svg>
-        <span class="nav__brand-name">VidyaSetu</span>
+  <div class="app">
+    <header class="appbar">
+      <a class="brand" href="#/home">
+        <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-logo"></use></svg>
+        <span class="brand__name">VidyaSetu</span>
       </a>
-      <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-menu">
-        <svg class="icon nav__toggle-icon" aria-hidden="true" focusable="false"><use href="#icon-menu"></use></svg>
-        <span class="nav__label">Menu</span>
-      </button>
-      <nav class="nav__menu" id="nav-menu" aria-label="Primary">
-        <ul>
-          <li><a class="nav__link" href="#home">Home</a></li>
-          <li><a class="nav__link" href="#subjects">Subjects</a></li>
-          <li><a class="nav__link" href="#how-it-works">How It Works</a></li>
-        </ul>
-        <button class="btn btn--ghost btn--sm" type="button" data-open-settings>Settings</button>
-      </nav>
-    </div>
-  </header>
+      <p class="appbar__where" id="appbar-where">Home</p>
+    </header>
 
-  <main id="main">
-    <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="container">
-        <p class="hero__eyebrow">Class 9 · NCERT · Free forever</p>
-        <h1 class="hero__title" id="hero-title">Every chapter of Class 9, open to every student.</h1>
-        <p class="hero__lede">No fees, no account, no ads, no upsell. Read the lesson, take the practice set, keep your notes — on the phone you already have. AI help works only when you bring your own key, and we tell you exactly where it goes.</p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="#subjects">Browse subjects</a>
-          <a class="btn btn--secondary" href="#how-it-works">How it works</a>
-        </div>
-        <ul class="hero__facts">
-          <li><span class="hero__fact-value">5</span> <span class="hero__fact-label">NCERT subjects, all of Class 9</span></li>
-          <li><span class="hero__fact-value">72</span> <span class="hero__fact-label">Chapters mapped to the syllabus</span></li>
-          <li><span class="hero__fact-value">₹0</span> <span class="hero__fact-label">Today, tomorrow, and after that</span></li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="section" id="subjects" aria-labelledby="subjects-title">
-      <div class="container">
-        <div class="section__head">
-          <h2 class="section__title" id="subjects-title">Five subjects. Every chapter named.</h2>
-          <p class="section__lede">Search by subject, book or chapter — “democracy”, “polynomials”, “Toto”. The list is the real NCERT rationalised syllabus, not a sample.</p>
-        </div>
-        <div class="subjects__toolbar">
-          <div class="field">
-            <label class="field__label" for="subjects-search">Search subjects and chapters</label>
-            <input class="field__control" id="subjects-search" type="search" placeholder="Try “democracy” or “polynomials”" autocomplete="off" aria-describedby="subjects-count">
+    <main class="viewport" id="main" tabindex="-1">
+      <div class="wrap">
+        <section class="view" id="view-home" data-view="home" aria-labelledby="home-title">
+          <div class="view__head">
+            <p class="view__eyebrow">Class 9 · NCERT · Free forever</p>
+            <h1 class="view__title" id="home-title" tabindex="-1">Your study desk</h1>
+            <p class="view__lede">Every chapter of Class 9, named and open. No fees, no account, no ads — pick a subject and start.</p>
           </div>
-        </div>
-        <p class="subjects__count" id="subjects-count" aria-live="polite"></p>
-        <div id="subjects-status" role="status" aria-live="polite"></div>
-        <ul class="subjects__grid" id="subjects-grid" aria-busy="true"></ul>
-        <section class="panel" id="subject-panel" tabindex="-1" aria-label="Subject chapters" hidden></section>
-      </div>
-    </section>
 
-    <section class="section section--tinted" id="how-it-works" aria-labelledby="how-title">
-      <div class="container">
-        <div class="section__head">
-          <h2 class="section__title" id="how-title">How it works</h2>
-          <p class="section__lede">Three steps, no forms, nothing to install. The whole site is static files — that is why it can stay free.</p>
-        </div>
-        <ol class="steps">
-          <li class="steps__item"><span class="steps__index">1</span><h3 class="steps__title">Pick a subject and chapter</h3><p class="steps__body">Search or browse. Every chapter map comes from the NCERT syllabus, so what you see is what your exam asks.</p></li>
-          <li class="steps__item"><span class="steps__index">2</span><h3 class="steps__title">Read, practise, keep notes</h3><p class="steps__body">Lessons and practice sets live on your device. Your progress and notes stay in this browser — no account, nothing uploaded.</p></li>
-          <li class="steps__item"><span class="steps__index">3</span><h3 class="steps__title">Ask for help, if you want it</h3><p class="steps__body">Add your own AI key once and get explanations in plain language. Remove the key any time; the rest of the site keeps working.</p></li>
-        </ol>
-        <div class="byok">
-          <h3 class="byok__title">AI help is BYOK — bring your own key</h3>
-          <p class="byok__body">We do not run a server, so there is nowhere for us to keep a secret key of our own. You paste yours, it is stored only in this browser, and it is sent only to the provider you picked — never to us, never to anyone else. Free tiers exist on most of these.</p>
-          <ul class="byok__providers">
-            <li class="chip">Google Gemini</li>
-            <li class="chip">Groq</li>
-            <li class="chip">OpenRouter</li>
-            <li class="chip">OpenAI</li>
-          </ul>
-          <div class="byok__actions">
-            <button class="btn btn--primary" type="button" data-open-settings>Add your key</button>
-            <span class="field__hint">Everything else works with no key at all.</span>
+          <div class="stat-strip" id="home-stats">
+            <div class="stat"><span class="stat__value tnum">5</span><span class="stat__label">Subjects</span></div>
+            <div class="stat"><span class="stat__value tnum">12</span><span class="stat__label">NCERT books</span></div>
+            <div class="stat"><span class="stat__value tnum">72</span><span class="stat__label">Chapters</span></div>
           </div>
-        </div>
-      </div>
-    </section>
-  </main>
 
-  <footer class="footer" id="footer">
-    <div class="container footer__grid">
-      <div>
-        <h2 class="footer__title">VidyaSetu</h2>
-        <p class="footer__text">विद्यासेतु — a bridge to the syllabus. Built as static HTML, CSS and JavaScript, so it costs nothing to run and nothing to use. No cookies, no trackers, no analytics, no accounts.</p>
-      </div>
-      <nav aria-label="Footer">
-        <ul class="footer__list">
-          <li><a href="#subjects">Subjects</a></li>
-          <li><a href="#how-it-works">How it works</a></li>
-          <li><a href="#home">Back to top</a></li>
-        </ul>
-      </nav>
-    </div>
-  </footer>
+          <section class="block" aria-labelledby="ai-title">
+            <div class="block__head">
+              <div>
+                <h2 class="block__title" id="ai-title">AI helper</h2>
+                <p class="block__sub" id="ai-status">Checking the keys on this device…</p>
+              </div>
+              <a class="btn btn--secondary btn--sm" href="#/settings">Manage keys</a>
+            </div>
+            <p class="block__text">Bring your own key and it stays in this browser — sent only to the provider you choose, never to us.</p>
+          </section>
 
-  <dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
-    <div class="dialog__inner">
-      <div class="dialog__head">
-        <div>
-          <h2 class="dialog__title" id="settings-title">Settings</h2>
-          <p class="dialog__subtitle">Your key stays in this browser.</p>
-        </div>
-        <form method="dialog">
-          <button class="dialog__close" type="submit" aria-label="Close settings">
-            <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-close"></use></svg>
-          </button>
-        </form>
-      </div>
-      <section class="dialog__section" aria-labelledby="byok-heading">
-        <h3 class="dialog__section-title" id="byok-heading">API key</h3>
-        <form class="field" id="key-form" novalidate>
-          <label class="field__label" for="provider-select">Provider</label>
-          <select class="field__control" id="provider-select"></select>
-          <label class="field__label" for="api-key">Your key</label>
-          <div class="field__row">
-            <input class="field__control" id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key from your provider">
-            <button class="field__toggle" type="button" id="key-visibility" aria-pressed="false">Show</button>
+          <section class="block" aria-labelledby="jump-title">
+            <div class="block__head">
+              <h2 class="block__title" id="jump-title">Jump to a subject</h2>
+              <a class="block__link" href="#/subjects">All subjects</a>
+            </div>
+            <ul class="subject-rows" id="home-subjects" aria-busy="true"></ul>
+          </section>
+        </section>
+
+        <section class="view" id="view-subjects" data-view="subjects" aria-labelledby="subjects-title" hidden>
+          <div id="subjects-browser">
+            <div class="view__head">
+              <h1 class="view__title" id="subjects-title" tabindex="-1">Subjects</h1>
+              <p class="view__lede">Five subjects, twelve NCERT books, every chapter named — search by subject, book or chapter.</p>
+            </div>
+            <div class="field field--search">
+              <label class="visually-hidden" for="subjects-search">Search subjects, books and chapters</label>
+              <input class="field__control" id="subjects-search" type="search" placeholder="Search “polynomials”, “democracy”, “Toto”…" autocomplete="off" aria-describedby="subjects-count">
+            </div>
+            <p class="meta" id="subjects-count" aria-live="polite"></p>
+            <div id="subjects-status" role="status" aria-live="polite"></div>
+            <ul class="subject-rows" id="subjects-grid" aria-busy="true"></ul>
           </div>
-          <p class="field__hint" id="key-hint"></p>
-          <p class="field__error" id="key-error" hidden></p>
-          <div class="dialog__actions">
-            <button class="btn btn--primary" type="submit">Save key</button>
-          </div>
-        </form>
-        <p class="dialog__note">Stored in this browser only. Never logged, never sent to us, never in a URL — and removable at any time.</p>
-        <p class="dialog__status" id="key-status" role="status" aria-live="polite"></p>
-        <ul class="key-list" id="key-list"></ul>
-      </section>
-      <section class="dialog__section" aria-labelledby="appearance-heading">
-        <h3 class="dialog__section-title" id="appearance-heading">Appearance</h3>
-        <div class="field">
-          <label class="field__label" for="theme-select">Theme</label>
-          <select class="field__control" id="theme-select">
-            <option value="system">Match my device</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
-        <label class="field__label" for="ledm-toggle">
-          <input type="checkbox" id="ledm-toggle"> Low-end device mode (no animation, less shadow)
-        </label>
-      </section>
-    </div>
-  </dialog>
+          <div class="subject-detail" id="subject-detail" tabindex="-1" aria-label="Subject chapters" hidden></div>
+        </section>
 
+        <section class="view" id="view-settings" data-view="settings" aria-labelledby="settings-title" hidden>
+          <div class="view__head">
+            <h1 class="view__title" id="settings-title" tabindex="-1">Settings</h1>
+            <p class="view__lede">Appearance and AI keys. Everything on this screen stays on this device.</p>
+          </div>
+
+          <div class="settings">
+            <section class="block" aria-labelledby="appearance-heading">
+              <div class="block__head">
+                <h2 class="block__title" id="appearance-heading">Appearance</h2>
+              </div>
+              <div class="set-row set-row--block">
+                <div>
+                  <p class="set-row__label">Theme</p>
+                  <p class="set-row__hint">Light by default; Studio is a true dark canvas.</p>
+                </div>
+                <div class="seg set-row__control" role="radiogroup" aria-label="Theme">
+                  <input class="seg__input" type="radio" name="theme" id="theme-light" value="light">
+                  <label class="seg__label" for="theme-light">Light</label>
+                  <input class="seg__input" type="radio" name="theme" id="theme-system" value="system">
+                  <label class="seg__label" for="theme-system">System</label>
+                  <input class="seg__input" type="radio" name="theme" id="theme-dark" value="dark">
+                  <label class="seg__label" for="theme-dark">Dark</label>
+                </div>
+              </div>
+              <div class="set-row">
+                <div>
+                  <p class="set-row__label">Low-end device mode</p>
+                  <p class="set-row__hint">No animation, no shadows, less work per frame.</p>
+                </div>
+                <label class="switch set-row__control">
+                  <input class="switch__input" type="checkbox" id="ledm-toggle">
+                  <span class="switch__track"></span>
+                  <span class="visually-hidden">Low-end device mode</span>
+                </label>
+              </div>
+            </section>
+            <section class="block" aria-labelledby="byok-heading">
+              <div class="block__head">
+                <div>
+                  <h2 class="block__title" id="byok-heading">AI keys</h2>
+                  <p class="block__sub">Stored in this browser only — never logged, never in a URL, removable any time.</p>
+                </div>
+              </div>
+              <form class="key-form" id="key-form" novalidate>
+                <div class="field">
+                  <label class="field__label" for="provider-select">Provider</label>
+                  <select class="field__control" id="provider-select"></select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="api-key">Your key</label>
+                  <div class="field__row">
+                    <input class="field__control" id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key from your provider">
+                    <button class="field__toggle" type="button" id="key-visibility" aria-pressed="false">Show</button>
+                  </div>
+                  <p class="field__hint" id="key-hint"></p>
+                  <p class="field__error" id="key-error" hidden></p>
+                </div>
+                <button class="btn btn--primary" type="submit">Save key</button>
+              </form>
+              <p class="key-status" id="key-status" role="status" aria-live="polite"></p>
+              <ul class="key-list" id="key-list"></ul>
+            </section>
+            <section class="block" aria-labelledby="about-heading">
+              <div class="block__head">
+                <h2 class="block__title" id="about-heading">About</h2>
+              </div>
+              <ul class="about">
+                <li class="about__item"><span class="about__dot"></span><span>Static files only — no server, no account, no analytics.</span></li>
+                <li class="about__item"><span class="about__dot"></span><span>Content is the real NCERT Class 9 chapter list for all five subjects.</span></li>
+                <li class="about__item"><span class="about__dot"></span><span>Your progress, keys and settings never leave this browser.</span></li>
+              </ul>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+    <nav class="tabbar" aria-label="Sections">
+      <a class="tab" href="#/home" data-tab="home">
+        <svg class="tab__icon" aria-hidden="true" focusable="false"><use href="#icon-home"></use></svg>
+        <span class="tab__label">Home</span>
+      </a>
+      <a class="tab" href="#/subjects" data-tab="subjects">
+        <svg class="tab__icon" aria-hidden="true" focusable="false"><use href="#icon-book"></use></svg>
+        <span class="tab__label">Subjects</span>
+      </a>
+      <a class="tab" href="#/settings" data-tab="settings">
+        <svg class="tab__icon" aria-hidden="true" focusable="false"><use href="#icon-settings"></use></svg>
+        <span class="tab__label">Settings</span>
+      </a>
+    </nav>
+  </div>
   <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
-
   <svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
     <symbol id="icon-logo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 18h20M5 18v-6a7 7 0 0 1 14 0v6M9 18v-4M15 18v-4"/></g></symbol>
-    <symbol id="icon-menu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></g></symbol>
-    <symbol id="icon-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></g></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></g></symbol>
+    <symbol id="icon-book" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h6M8 11h6"/></g></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.5 12H2.1M21.9 12h-2.4M6.7 6.7 5 5M19 19l-1.7-1.7M6.7 17.3 5 19M19 5l-1.7 1.7"/></g></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></g></symbol>
+    <symbol id="icon-go" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></g></symbol>
     <symbol id="icon-math" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 5H7l5 7-5 7h10"/></g></symbol>
     <symbol id="icon-science" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3M7 14h10"/></g></symbol>
     <symbol id="icon-social" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9S14.5 18.5 12 21c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3z"/></g></symbol>
     <symbol id="icon-english" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h6M8 11h6"/></g></symbol>
     <symbol id="icon-hindi" viewBox="0 0 24 24"><text x="12" y="18" text-anchor="middle" font-size="15" font-family="system-ui, sans-serif" fill="currentColor">अ</text></symbol>
   </svg>
-
-  <script type="module" src="./modules/nav.js"></script>
+  <script type="module" src="./modules/router.js"></script>
+  <script type="module" src="./modules/home.js"></script>
   <script type="module" src="./modules/subjects.js"></script>
   <script type="module" src="./modules/settings.js"></script>
 </body>

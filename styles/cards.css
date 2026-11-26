@@ -1,185 +1,107 @@
-/* cards.css — icons, chips, subject cards and the chapter panel. */
+/* cards.css — subject rows, book groups, chapter rows, saved-key rows.
+   Rows are <a> or <li> wrappers; the whole row is the tap target (min 56px). */
 
-/* ---------- Icons and chips ---------- */
-.icon {
-  width: 20px;
-  height: 20px;
-  flex: none;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  padding: 2px var(--sp-2);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background-color: var(--surface-1);
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.chip--ok {
-  border-color: var(--success);
-  color: var(--success);
-}
-
-.chip--warn {
-  border-color: var(--warning);
-  color: var(--warning);
-}
-
-/* ---------- Subject cards ---------- */
-.subject-card {
+.subject-rows {
   display: grid;
   gap: var(--sp-2);
-  width: 100%;
-  height: 100%;
-  padding: var(--sp-5);
-  text-align: start;
-  background-color: var(--surface-0);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-1);
+}
+
+.subject-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 3.5rem;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
   transition: transform var(--dur-1) var(--ease);
 }
 
-.subject-card:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
+.subject-row:hover {
+  text-decoration: none;
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
 }
 
-.subject-card[aria-expanded="true"] {
-  border-color: var(--saffron);
-  box-shadow: 0 0 0 2px var(--saffron) inset;
+.subject-row:active {
+  transform: none;
 }
 
-.subject-card__top {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.subject-card__icon {
+.subject-row__icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
   flex: none;
-  border-radius: var(--radius-md);
-  background-color: var(--surface-1);
-  border: 1px solid var(--border);
-  color: var(--hue, var(--ink-700));
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--r-sm);
+  background: var(--sunken);
+  color: var(--hue, var(--accent-ink));
 }
 
-.subject-card__icon .icon {
-  width: 24px;
-  height: 24px;
+.subject-row__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
-.subject-card__name {
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  color: var(--text);
-}
-
-.subject-card__tagline {
-  font-size: var(--fs-sm);
-  color: var(--saffron-700);
-  font-weight: 600;
-}
-
-.subject-card__text {
-  display: grid;
-  gap: 2px;
+.subject-row__text {
   min-width: 0;
+  flex: 1;
 }
 
-.subject-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  align-items: center;
+.subject-row__name {
+  display: block;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.subject-row__sub {
+  display: block;
+  margin-top: 0.0625rem;
+  color: var(--ink-3);
   font-size: var(--fs-xs);
-  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hue-indigo { --hue: var(--hue-indigo); }
-.hue-sage { --hue: var(--hue-sage); }
-.hue-plum { --hue: var(--hue-plum); }
-.hue-sky { --hue: var(--hue-sky); }
-.hue-saffron { --hue: var(--hue-saffron); }
-
-/* ---------- Chapter panel ---------- */
-.panel {
-  margin-block-start: var(--sp-5);
-  padding: var(--sp-5);
-  background-color: var(--surface-0);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+.subject-row__count {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-.panel__head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  align-items: start;
-  justify-content: space-between;
-  margin-block-end: var(--sp-4);
+.subject-row__go {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--ink-3);
 }
 
-.panel__title {
-  font-size: var(--fs-xl);
+/* Hue classes: icon colour and dot only */
+.hue-indigo {
+  --hue: var(--hue-indigo);
+}
+.hue-sage {
+  --hue: var(--hue-sage);
+}
+.hue-plum {
+  --hue: var(--hue-plum);
+}
+.hue-sky {
+  --hue: var(--hue-sky);
+}
+.hue-saffron {
+  --hue: var(--hue-saffron);
 }
 
-.panel__lede {
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
-  max-width: 60ch;
-}
-
-.panel__book + .panel__book {
-  margin-block-start: var(--sp-4);
-}
-
-.panel__book-name {
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-block-end: var(--sp-2);
-}
-
-.panel__chapters {
-  columns: 2;
-  column-gap: var(--sp-5);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  font-size: var(--fs-sm);
-}
-
-@media (max-width: 639px) {
-  .panel__chapters {
-    columns: 1;
+@media (min-width: 60rem) {
+  .subject-rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
   }
-}
-
-.panel__chapters li {
-  break-inside: avoid;
-  padding-block: var(--sp-1);
-  max-width: none;
-}
-
-.panel__note {
-  margin-block-start: var(--sp-4);
-  padding: var(--sp-3);
-  border-radius: var(--radius-sm);
-  background-color: var(--surface-1);
-  border-inline-start: 3px solid var(--info);
-  color: var(--text-muted);
-  font-size: var(--fs-sm);
 }
