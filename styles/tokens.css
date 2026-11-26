@@ -1,0 +1,165 @@
+/* tokens.css — the single source of truth for every design value.
+   Do not edit values without approval (AGENTS.md §8). Contrast ratios are computed,
+   not eyeballed; see AGENTS.md §3.1 for the table they come from. */
+
+:root {
+  /* ---- Palette: light ("Chalk & Ink") ---- */
+  --surface-0: #fcfaf5;
+  --surface-1: #f5f1e8;
+  --surface-2: #efeadf;
+
+  --ink-900: #0e1433;
+  --ink-800: #17204a;
+  --ink-700: #2a2e6e;
+  --plum-600: #6d3a7a;
+
+  --text: var(--ink-900);
+  --text-muted: #4a5474;
+  --text-subtle: #6b7590;
+  --text-on-ink: #fcfaf5;
+  --text-on-ink-muted: #b9c0d6;
+
+  --border: #cbd3e3;
+  --border-strong: #76809a;
+
+  --saffron: #f0a22e;
+  --saffron-600: #c97f14;
+  --saffron-700: #8f5400;
+  --on-saffron: #0e1433;
+
+  --success: #1e6b45;
+  --warning: #8a5300;
+  --danger: #a3231f;
+  --info: #1e5a8a;
+  --focus: #2b3a8f;
+
+  /* Subject hues — deliberately spread across the palette, never near-greys */
+  --hue-indigo: #2a2e6e;
+  --hue-sage: #1e6b45;
+  --hue-plum: #6d3a7a;
+  --hue-sky: #1e5a8a;
+  --hue-saffron: #b06a00;
+
+  /* Gradients: across genuinely different hues only */
+  --grad-ink: linear-gradient(135deg, #0e1433 0%, #2a2e6e 58%, #6d3a7a 100%);
+  --grad-accent: linear-gradient(120deg, #f0a22e 0%, #e4572e 100%);
+
+  /* ---- Scrollbar ---- */
+  --scroll-track: #efeadf;
+  --scroll-thumb: #6b7590;
+  --scroll-thumb-hover: #4a5474;
+
+  /* ---- Type scale (system fonts only, no @font-face ever) ---- */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari",
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-md: 1rem;
+  --fs-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --fs-xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  --fs-2xl: clamp(1.75rem, 1.35rem + 2vw, 2.75rem);
+  --lh-tight: 1.2;
+  --lh-body: 1.6;
+  --measure: 68ch;
+
+  /* ---- Spacing (4px rhythm) ---- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+
+  /* ---- Radii, elevation, chrome ---- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgb(14 20 51 / 0.06);
+  --shadow-2: 0 12px 32px -12px rgb(14 20 51 / 0.35);
+  --nav-h: 60px;
+  --container: 72rem;
+  --focus-ring: 2px solid var(--focus);
+  --focus-offset: 2px;
+
+  /* ---- Motion (transform/opacity only) ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-1: 140ms;
+  --dur-2: 240ms;
+  --stagger: 55ms;
+
+  /* ---- Z-index ladder (only these values) ---- */
+  --z-nav: 50;
+  --z-toast: 60;
+  --z-dialog: 70;
+}
+
+/* ---- Dark theme: token swap only, components never hardcode colours ---- */
+[data-theme="dark"] {
+  --surface-0: #131a38;
+  --surface-1: #1b2347;
+  --surface-2: #0f1430;
+
+  --ink-900: #0b1026;
+  --ink-800: #0f1630;
+  --ink-700: #1f2a5e;
+  --plum-600: #8a4d99;
+
+  --text: #f5f1e8;
+  --text-muted: #b9c0d6;
+  --text-subtle: #9aa4bd;
+  --text-on-ink: #f5f1e8;
+  --text-on-ink-muted: #b9c0d6;
+
+  --border: #2c3560;
+  --border-strong: #7c87a8;
+
+  --saffron: #f0a22e;
+  --saffron-600: #f5b751;
+  --saffron-700: #f0a22e;
+  --on-saffron: #131a38;
+
+  --success: #7ed0a3;
+  --warning: #f5c56b;
+  --danger: #ff9e93;
+  --info: #8fb3e0;
+  --focus: #f0a22e;
+
+  --hue-indigo: #8fa4ee;
+  --hue-sage: #7ed0a3;
+  --hue-plum: #c79ad4;
+  --hue-sky: #8fb3e0;
+  --hue-saffron: #f5b751;
+
+  --grad-ink: linear-gradient(135deg, #0f1430 0%, #1f2a5e 58%, #5a2c66 100%);
+  --grad-accent: linear-gradient(120deg, #f0a22e 0%, #e4572e 100%);
+
+  --scroll-track: #0f1430;
+  --scroll-thumb: #7c87a8;
+  --scroll-thumb-hover: #98a2bc;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 12px 32px -12px rgb(0 0 0 / 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --stagger: 0ms;
+  }
+}
+
+/* LEDM: low-end device mode — set by settings.js when the device looks weak */
+.ledm {
+  --dur-1: 0ms;
+  --dur-2: 0ms;
+  --stagger: 0ms;
+  --nav-h: 52px;
+  --shadow-2: none;
+}

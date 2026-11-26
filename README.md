@@ -7,7 +7,8 @@ No sign-up. No ads. No trackers. No server. Runs on a cheap phone.
 
 ## Status
 
-Session 0 — foundation only. The three protocol documents exist; application code starts in Phase 2.
+Session 0 shipped: the shell, the Class 9 subject browser with live search, and BYOK settings
+(save / test / remove with undo). Lessons and notes arrive in Session 1.
 
 ## Run it
 

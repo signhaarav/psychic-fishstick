@@ -35,41 +35,60 @@ Three consequences that shape everything:
 
 ## 2. Structure
 
+Shipped as of Phase 2. Every file is ≤ 200 lines (`AGENTS.md §7`); where that cap forced a split, the split is
+by responsibility, listed below.
+
 ```
 /
-├── index.html                 # The only page so far: nav, hero, subjects grid, how-it-works/BYOK, footer.
-├── README.md                  # Human-facing intro: what it is, how to serve it, how to contribute content.
-│
-├── AGENTS.md                  # The rulebook: constraints, quality bar, workflow, testing, module rules.
+├── index.html                 # The page: skip link, fixed nav, hero, subject browser, how-it-works/BYOK, footer, settings dialog, toast host, inline SVG sprite, three module <script> tags.
+├── README.md                  # Human-facing intro: what it is, how to serve it, what it promises.
+├── AGENTS.md                  # The rulebook: constraints, quality bar, visual identity, workflow, testing, module rules.
 ├── ARCHITECTURE.md            # This map: file purposes, data flow, storage schema, extension guides.
-├── PROGRESS.md                # The logbook: what is done, what is in flight, what is next, decisions, bugs.
+├── PROGRESS.md                # The logbook: what is done, what is in flight, decisions, bugs.
 │
 ├── styles/
-│   ├── tokens.css             # Every design value as a CSS custom property: palette, type scale, spacing, radii, shadows, z-index — the only file allowed to contain raw values.
-│   ├── base.css               # Reset, element defaults, typography, link/focus/selection/caret styling, reduced-motion and LEDM query hooks.
-│   ├── layout.css             # Page shell: fixed navbar, container widths, hero, section rhythm, grid definitions, footer, 375px→1280px breakpoints.
-│   ├── components.css         # Reusable blocks: buttons, cards, subject tiles, search field, modal/dialog, toast, badges, SVG icon sizing, all four UI states.
-│   └── scrollbar.css          # Custom scrollbar (track/thumb/hover) for standards browsers and Chromium/Safari, in both themes.
+│   ├── tokens.css             # Every design value as a custom property (palette both themes, type scale, spacing, radii, z-index, nav-h, motion) — the only file allowed to hold raw values.
+│   ├── base.css               # Reset, element defaults, typography, focus/selection/caret, utilities, reduced-motion collapse.
+│   ├── layout.css             # Page shell: container, section rhythm, footer, toast host.
+│   ├── nav.css                # The fixed navbar: brand, links, active state, mobile disclosure menu.
+│   ├── sections.css           # Hero, subject-browser toolbar and grid, "how it works" steps, BYOK explainer.
+│   ├── components.css         # Buttons and form fields (label, control, hint, error, show/hide row).
+│   ├── cards.css              # Icons, chips, subject cards, hue mapping, chapter panel.
+│   ├── states.css             # Loading / empty / error blocks, the staged entrance animation and its keyframes.
+│   ├── dialog.css             # The settings modal and the saved-key rows inside it.
+│   ├── toast.css              # One toast, its action button, its entrance.
+│   └── scrollbar.css          # Palette scrollbars for standards browsers and Chromium/Safari, plus the dialog's inner scroller.
 │
 ├── modules/
-│   ├── nav.js                 # Fixed-nav behaviour: mobile menu toggle, active-section highlighting via one IntersectionObserver, smooth anchor scrolling with navbar offset.
-│   ├── subjects.js            # Loads ./data/subjects.json, renders the subject grid, and wires live search/filter (with an announced result count and empty state).
-│   ├── settings.js            # Settings/BYOK dialog: provider select, masked key input, save/test/remove with undo, the three key paths, and theme toggle.
-│   └── toast.js               # Tiny pub/sub toast system: notify(message, { variant, actionLabel, onAction, duration }) with an aria-live region and one-at-a-time stacking.
+│   ├── nav.js                 # Fixed-nav behaviour: menu toggle with aria-expanded, Esc/outside-click close, one IntersectionObserver for active-section state.
+│   ├── subjects.js            # Renders the grid, live search, result count, and the loading/empty/error states; owns which subject is open.
+│   ├── subjectPanel.js        # Renders the chapter panel for one subject (books → chapters), pure and reusable.
+│   ├── settings.js            # Settings dialog: provider select, masked key field, save, per-key test/remove-with-undo, appearance controls.
+│   ├── keyList.js             # Renders the saved-key rows (masked only) and the honest "no keys yet" state.
+│   ├── theme.js               # Theme resolution (light/dark/system), LEDM detection and application, settings persistence.
+│   ├── toast.js               # notify(message, opts) into the single aria-live region; one timer, one toast, optional action.
+│   └── dom.js                 # el() and svgIcon() helpers — no state, no data access, no HTML strings.
 │
 ├── services/
-│   ├── storageService.js      # The only code that touches localStorage: namespaced read/write/remove/list, JSON-safe, quota- and private-mode-aware, never throws raw.
-│   └── byokService.js         # The only code that holds or transmits keys: CRUD, masking, provider registry, test connection, typed errors, redaction. Never logs a key.
+│   ├── storageService.js      # The only code that touches localStorage: namespaced read/write/remove/clear, JSON-safe, quota- and private-mode-aware.
+│   ├── byokService.js         # The only code that holds or sends keys: CRUD, masking, test call, typed errors. Never logs a key.
+│   ├── providers.js           # The provider registry: id, label, origin, key hint, docs URL, and how to build each test request.
+│   └── contentService.js      # The only code that fetches content: loads and validates data/subjects.json, typed ContentError.
 │
 ├── data/
-│   ├── subjects.json          # Seeded Class 9 NCERT subjects: id, name, tagline, description, lessonCount, icon id, colour key.
-│   └── lessons/               # (future) One JSON file per lesson, plus an index.json manifest; same schema family as subjects.json.
+│   ├── subjects.json          # Seeded Class 9 NCERT catalogue: 5 subjects, 12 books, 72 real chapter titles, hue + icon keys.
+│   └── lessons/               # (Session 1) One JSON file per lesson plus index.json; same schema family as subjects.json. Not created yet.
 │
 └── assets/
-    └── icons/                 # Source .svg files for each icon (name-matched to subjects.json `icon`); inlined into index.html at build-free authoring time.
+    └── icons/                 # Source .svg files (7): favicon, logo, and one per subject. The shipped copies live in the index.html sprite.
 ```
 
-Nothing else exists yet. No `src/`, no `dist/`, no `node_modules/`, no `package.json`.
+Why more files than the original sketch: the 200-line cap applies to HTML, CSS and JS alike, so `components.css`
+became `components + cards + states + dialog + toast + nav`, and `subjects.js` split into
+`subjects + subjectPanel + dom`. Each file now has exactly one job. Total first-load weight is still ~62 KB raw
+(~21 KB gzip) across 17 requests, and there is still no build step.
+
+Nothing else exists: no `src/`, no `dist/`, no `node_modules/`, no `package.json`, no service worker.
 
 ---
 
@@ -131,7 +150,23 @@ export function isAvailable()                     // false in private mode / sto
   mapped to `{ ok: false, error: 'unknown' }`.
 - Values are JSON. Non-serialisable values are rejected at write time, not silently dropped.
 
-### 4.2 `byokService.js`
+### 4.2 `contentService.js` and `providers.js`
+
+```js
+// contentService.js
+export async function loadSubjects({ signal })   // fetch ./data/subjects.json, validate shape, throw ContentError
+export function countChapters(subject)            // sum of chapters across a subject's books
+
+// providers.js
+export const PROVIDERS                            // [{ id, label, origin, keyHint, docsUrl, buildRequest(key) }]
+export function getProvider(id)
+export function listProviders()                   // display metadata only, no key material
+```
+
+`contentService` is the only module-facing way to read content, so `modules/*` stay fetch-free. `providers`
+holds no state and performs no calls — it only describes how a request is built.
+
+### 4.3 `byokService.js`
 
 ```js
 export const PROVIDERS = [ { id, label, keyHint, docsUrl, origin, test(model, key, signal) } ];
@@ -158,14 +193,22 @@ export async function testKey(id, { signal })  // 1-token ping → { ok, latency
 
 | Module | Public surface | Owns |
 | --- | --- | --- |
-| `nav.js` | `initNav()` | Mobile menu open/close/Esc/focus return; active-section `aria-current`; anchor scroll offset. |
-| `subjects.js` | `initSubjects()` | Fetch-free rendering from `data/subjects.json`; live search; result count; empty and error states. |
-| `settings.js` | `initSettings()` | Dialog open/close; key form; provider select; test/save/remove; undo wiring; theme toggle. |
-| `toast.js` | `notify(message, opts)`, `initToasts()` | Single `aria-live="polite"` region; one toast at a time; optional action button; timers cleared on teardown. |
+| `nav.js` | side-effect init on load | Menu toggle (`aria-expanded`, label and icon swap), Esc and outside-click close, active-section `aria-current` via one IntersectionObserver, reset on resize to desktop. |
+| `subjects.js` | side-effect init on load | Grid render, debounced live search, result count announcement, loading/empty/error states, which subject panel is open, focus return. |
+| `subjectPanel.js` | `renderPanel(panel, subject, note)` | The chapter panel markup for one subject; shows the syllabus note and the honest "lessons in Session 1" line. |
+| `settings.js` | side-effect init on load | Dialog open/close + focus return, provider select, key save/validation messages, per-key test, remove with Undo, appearance controls. |
+| `keyList.js` | `renderKeyList(listEl)` | Masked key rows and the empty state. Renders no raw key, ever. |
+| `theme.js` | `readSettings`, `applyTheme`, `detectLEDM`, `applyLEDM`, `saveSettings`, `initTheme` | Resolving light/dark/system to `data-theme`, LEDM class, settings persistence, reacting to OS theme changes. |
+| `toast.js` | `notify(message, opts)`, `dismissToast()` | The single toast: one at a time, own timer, optional action button (used for Undo). |
+| `dom.js` | `el(tag, opts)`, `svgIcon(id)` | Element creation with `textContent` only — there is no code path that builds HTML from a string. |
 
-Every module exports one `init*` function and keeps its state in closure scope. No module writes to `window`.
-Each `init*` returns a `destroy()`-style cleanup only if it registers document-level listeners — otherwise it is
-idempotent and guarded against double-init (the "exercise it twice" test in `AGENTS.md §5.1` depends on this).
+Rules every module follows:
+
+- **State lives in closure scope.** Nothing is attached to `window`; nothing is exported that another module can mutate.
+- **No fetch, no storage.** Those calls exist only in `services/*`; modules import the service and handle its result.
+- **Idempotent init.** Module bodies run once per page load; handlers are attached to elements that exist in
+  `index.html` or to containers that are re-rendered wholesale (delegation), so re-rendering never stacks listeners.
+- **Explicit re-render.** A module re-renders only the node it owns; there is no global "render the page" call.
 
 ---
 
@@ -231,24 +274,31 @@ Rules: namespaced and versioned; JSON only; written exclusively by services; cor
   "schemaVersion": 1,
   "class": 9,
   "board": "NCERT",
+  "syllabusNote": "Chapter lists follow the NCERT rationalised syllabus (2023–24). Check against the edition your school uses.",
   "subjects": [
     {
-      "id": "mathematics",
-      "name": "Mathematics",
-      "tagline": "Numbers, shapes, and the reasoning behind them",
-      "description": "Real NCERT Class 9 chapters — from number systems and polynomials to circles, surface areas and statistics.",
-      "lessonCount": 12,
-      "icon": "icon-math",
-      "hue": "indigo",
-      "available": true
+      "id": "science",
+      "name": "Science",
+      "tagline": "From particles of matter to the sound you hear",
+      "description": "Matter, atoms and cells in the first half; motion, force, gravitation, work, sound and food resources in the second.",
+      "icon": "icon-science",
+      "hue": "sage",
+      "books": [
+        { "name": "Science — Textbook for Class IX", "chapters": ["Matter in Our Surroundings", "Is Matter Around Us Pure?"] }
+      ]
     }
   ]
 }
 ```
 
-- Five entries, real copy, real NCERT chapter counts. `hue` maps to a token colour, never a raw hex.
-- `available: false` renders a "coming soon" state honestly rather than a dead link — and says when.
-- Lesson files (later) live in `data/lessons/<subject-id>-<nn>-<slug>.json`, registered in `index.json`.
+- **Shipped state:** 5 subjects, 12 books, **72 real chapter titles** (Mathematics 12, Science 12, Social Science
+  20 across four books, English 28 across Beehive prose/poetry and Moments, Hindi listed by book only until its
+  content pack lands).
+- `books[].chapters` is the source of every count shown in the UI — `countChapters()` derives it, so no number is
+  typed twice. A subject with no chapter titles yet (`hindi`) displays its book list instead of inventing titles.
+- `hue` maps to a token (`hue-indigo`, `hue-sage`, …), never a raw hex.
+- `syllabusNote` is shown inside the chapter panel so the student knows which edition the list follows.
+- Lesson files (Session 1) live in `data/lessons/<subject-id>-<nn>-<slug>.json`, registered in `index.json`.
 
 ---
 

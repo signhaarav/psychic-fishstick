@@ -1,0 +1,77 @@
+/* toast.css — the single toast, its action button, and its entrance. */
+
+/* ---------- Toast ---------- */
+.toast {
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  width: fit-content;
+  max-width: min(30rem, calc(100vw - 2rem));
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  border-inline-start: 4px solid var(--info);
+  background-color: var(--surface-0);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+  font-size: var(--fs-sm);
+}
+
+.toast--success { border-inline-start-color: var(--success); }
+.toast--danger { border-inline-start-color: var(--danger); }
+.toast--warning { border-inline-start-color: var(--warning); }
+
+.toast__msg {
+  margin: 0;
+  max-width: 42ch;
+}
+
+.toast__action {
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--saffron-700);
+  border-radius: var(--radius-sm);
+  color: var(--saffron-700);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  background-color: transparent;
+}
+
+.toast__action:hover {
+  background-color: var(--saffron);
+  color: var(--on-saffron);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in var(--dur-2) var(--ease);
+  }
+
+  .dialog[open] .dialog__inner {
+    animation: dialog-in var(--dur-2) var(--ease);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
