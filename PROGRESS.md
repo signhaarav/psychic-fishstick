@@ -8,8 +8,8 @@
 | Project | **VidyaSetu** — free, unlimited-forever online classes for Indian students |
 | Audience | Class 9, NCERT — Mathematics, Science, Social Science, English, Hindi |
 | Branch | `arena/183a925b-psychic-fishstick` |
-| Current session | **Session 0 — closed out** (foundation shipped + audited) |
-| App code | ✅ Phase 2 built: shell, subjects, BYOK settings |
+| Current session | **App-shell redesign — shipped** (app frame, three views, new design system) |
+| App code | ✅ Phase 2 + redesign: app shell, workspace views, BYOK settings |
 | Last updated | 2026-11-26 |
 
 ---
@@ -28,17 +28,27 @@
 | P2-5 | `services/` — storageService, byokService, providers, contentService | 2026-11-26 | `825306d` | **32/32** behavioural checks (§6) |
 | P2-6 | Custom scrollbars, gradients, staged entrance, reduced-motion + LEDM | 2026-11-26 | `825306d` | CSS-only; motion audit clean |
 | S0-5 | Close-out: constraint audit, lazy below-fold (`C-01`), transform-only motion (`C-02`), `.nav__label` (`C-03`) | 2026-11-26 | `c2b126f` | see §4 and §6 |
-| S0-6 | Close-out round 2: contracts audit, CSP↔registry equality, docs accuracy, this report | 2026-11-26 | *(this commit)* | §6 |
+| S0-6 | Close-out round 2: contracts audit, CSP↔registry equality, docs accuracy | 2026-11-26 | `b3741b4` | §6 |
+| R-1 | **App frame**: `body` locked to `100dvh`, one scrolling viewport, app bar with the view name, bottom tab bar below 60rem that becomes a left rail at 60rem — one markup, two layouts | 2026-11-26 | `7231d82` | 45/45 jsdom DOM checks (§6) |
+| R-2 | **Design system rewrite**: Editorial light default + Studio dark, one indigo accent, 4px spacing grid, two elevation levels, 12 stylesheets | 2026-11-26 | `7231d82` | contrast computed for 25 pairs; no raw value outside `tokens.css` |
+| R-3 | **Workspace views**: Home (real counts, key status, shortcuts), Subjects (list ⇄ detail pane, deep-linkable), Settings (a view, not a dialog) | 2026-11-26 | `7231d82` | 45/45 jsdom checks; 32/32 service checks unchanged |
+| R-4 | **Router + shared content load**: `router.js`, `contentStore.js`, `subjectRow.js` added; `nav.js`, `layout.css`, `nav.css`, `dialog.css` deleted | 2026-11-26 | `7231d82` | 35/35 referenced files return 200; no stale references |
 
 ---
 
 ## 2. Current
 
-**Session 0 closed.** Nothing is half-built: the page loads its real content, search works, the settings dialog
-saves/tests/removes keys, and the docs match the code.
+**Redesign shipped.** The app opens on a Home workspace with real counts and a real key status, tabs between
+three views without reloading, keeps the page itself unscrollable, and swaps Subjects for a subject detail pane
+with working browser back/forward.
 
-Open item carried into Session 1: there is **no lesson page yet**, so subject cards open the real chapter list
-and say plainly that lessons arrive next session. That is the only "not yet" surface in the UI.
+Two honest gaps, both stated in the UI:
+
+1. **No lesson page yet** — the subject detail says lessons arrive in the next build. That is the only "not yet"
+   surface, and it is the next task.
+2. **`AGENTS.md §3.1` still lists the pre-redesign palette** ("Ink & Chalk", saffron fills, gradients). The app
+   now ships the Editorial/Studio system in `tokens.css`. `AGENTS.md` is do-not-touch without approval (§8), so
+   the rulebook and the code disagree until you say otherwise — see §4.
 
 ---
 
@@ -49,8 +59,8 @@ and say plainly that lessons arrive next session. That is the only "not yet" sur
 task; they follow as their own task once the viewer is verified.
 
 Acceptance for that task: one complete real lesson (sections, worked example, practice set with explanations),
-reachable from its chapter, zero console errors, 375/1280 clean, and the "Lessons in Session 1" chip replaced
-with a state that reflects what actually exists.
+reachable from its chapter, zero console errors, 375/1280 clean, and the detail-pane note ("lesson pages open in
+the next build") replaced with a real lesson link.
 
 Status: **not started, awaiting "Approved"** (`AGENTS.md §4` — plan first).
 
@@ -58,7 +68,11 @@ Status: **not started, awaiting "Approved"** (`AGENTS.md §4` — plan first).
 
 ## 4. Known bugs
 
-**None open** (0 known bugs at close-out; nothing deferred, nothing worked-around).
+**None open** in shipped code. One item needs your decision:
+
+| ID | Needs | Detail |
+| --- | --- | --- |
+| A-01 | **Approval to edit `AGENTS.md`** | §3 visual identity ("Ink and chalk, saffron for what matters") and its §3.1 palette table describe the old system. The redesign uses a neutral canvas + single indigo accent (Editorial light / Studio dark). The file is untouched per §8, so it currently misdescribes the app. Say "update AGENTS §3" and it becomes a docs-only commit. |
 
 Fixed during this build, before the commit (recorded so the same mistakes are not repeated):
 
@@ -78,13 +92,24 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 | C-02 | **C5** — animation on transform/opacity only | Two `transition` declarations still animated `background-color` / `border-color` | Removed; hover now changes colour instantly and only `transform` transitions |
 | C-03 | Modular rules / hygiene | `.nav__label` was used by markup and `nav.js` but had no CSS rule | Added a rule in `nav.css`, so the class is defined where it is used |
 
+Found during the redesign (all fixed before the commit):
+
+| ID | Severity | Bug | Fix |
+| --- | --- | --- | --- |
+| B-06 | P1 | `home.js` called `subjectRow()` after a silent failed edit — the import never landed, so Home caught the `ReferenceError` and showed "Subjects could not be loaded" while Subjects worked | Added the import; the jsdom run caught it. *Lesson: verify every scripted edit, never trust that a `replace` matched.* |
+| B-07 | P1 (method) | The first jsdom run "passed" 43 checks while the app scripts had **never executed** — jsdom does not support `<script type="module">`, so the assertions were testing static markup | Bundle the real module graph with esbuild and inject it; only then trust the run |
+| B-08 | P2 | At 320–375 px the theme segmented control could overflow its row, and the key input could refuse to shrink beside the Show button | Stack the theme row under 30rem; `min-width: 0` on the field |
+| C-04 | C5 / hygiene | Dead CSS after the rewrite: `chip`, `chip--accent`, `chip--warning`, `iconbtn`, `switch__text`, `set-row--stack`, `.stack`, `.divider` | Removed; the class-coverage audit now reports no dead rules |
+| C-05 | §7 line cap | Four files exceeded 200 lines after first draft (components 326, cards 218, index 203, subjects 205) | Split into `controls.css`, `chapters.css`, `subjectRow.js`; largest file now 199 lines |
+
 ---
 
 ## 5. Phase 2 board — done
 
 | ID | Item | Status |
 | --- | --- | --- |
-| P2-1 … P2-7 | See `AGENTS.md` §1 for scope; all delivered in this commit | ✅ |
+| P2-1 … P2-7 | Phase 2 scope (`AGENTS.md` §1); delivered | ✅ |
+| R-1 … R-4 | App-shell redesign: frame, design system, three views, router | ✅ |
 
 ---
 
@@ -92,48 +117,42 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 
 **Performed (this environment):**
 
-- All 17 first-load requests return **200**; zero 404s (`python3 -m http.server` + request sweep).
-- All 12 JS files **parse as ES modules** (`node --check` on `.mjs` copies).
-- `data/subjects.json` parses; counts (5 subjects / 12 books / 72 chapters) derived from the file.
-- **Service tests, 32/32 passing** in Node with stubbed storage and `fetch`: storage round-trip, corrupt-JSON
-  fallback, unserialisable write rejected, namespace-scoped clear; key validation (`too-short`, `has-space`,
-  `unknown-provider`), masking, save → list (masked only) → remove → restore; `testKey` for 200 / 401 / 429 / 503 /
-  network throw / no-key; **key travels in a header, never the URL**; Gemini adapter header check; a
-  **console-leak assertion** confirming no key material reached any log call; and `contentService` against the real
-  `subjects.json` (5 subjects, 72 chapters, 12 books, every icon/hue/description present) plus malformed / 404 /
-  network failure mapping.
-- Greps: no inline handlers, no inline styles, no `innerHTML`/`eval`/`document.write`, no `console.log`, no
-  TODO/FIXME/lorem/"coming soon", no `href="#"`, no default-gray literals outside `tokens.css`, no absolute-root
-  paths, and no `fetch`/`localStorage` anywhere in `modules/`.
-- Weight: **85.9 KB raw / 30.4 KB gzip over 26 requests**, resolved through the real import graph
-  (HTML 1 · CSS 11 · JS 12 · JSON 1 · icon 1) — budget 200 KB, **114 KB headroom**. *(An earlier note said
-  62.8 KB / 17 requests; that counted only `<link>`/`<script>` tags and missed the transitively imported
-  modules. Corrected here.)*
-- Line caps: largest file 199 lines; everything ≤ 200.
-- **Close-out structural checks:** HTML tags balance with no unclosed elements, no duplicate `id`s, every
-  `aria-labelledby`/`aria-controls`/`aria-describedby` target exists, every `href="#…"` anchor resolves.
-- **Token completeness:** 69 `var(--…)` uses, all defined (only `--hue` and `--rise-index` set locally by components).
-- **Class coverage:** every class in markup or generated by JS exists in CSS.
-- **Motion audit:** all four `@keyframes` animate only `transform`/`opacity`; all transitions now `transform` only.
-- **Constraint audit C1–C6:** no `package.json`/`node_modules`, all imports relative, no external `<link>`/`<script>`,
-  zero `@font-face`, `localStorage` only inside `services/`, no key-shaped literals in shipped files, no
-  root-absolute paths, 1 `h1`, 4 landmarks, 5/5 form controls labelled, skip link + `:focus-visible` present.
-- **CSP ↔ registry equality:** the four `connect-src` origins match `PROVIDERS[].origin` exactly, and no
-  `buildRequest` creates a host outside that list.
-- **Contract audit:** exported service surface unchanged from what `ARCHITECTURE.md §4` documents — one correction
-  made to the doc, not the code (`getKey` → private `getRawKey`). Storage keys unchanged: `vs:v1:byok`,
-  `vs:v1:settings`. JSON schema unchanged (`schemaVersion: 1`).
+- **DOM integration run, 45/45 passing.** The real module graph (bundled by esbuild only for the harness, not
+  shipped) executed in jsdom against the live server and real `localStorage`: default view, stat strip = 5/12/72
+  from the JSON, five Home shortcuts, honest no-key status line, tab switching + `aria-current` + focus to the
+  view title, deep link `#/subjects/science` twice, chapter count equal to the JSON, back link, search filter and
+  empty state and clear-search, provider list, key save (row rendered, masked shown, raw key absent from the DOM,
+  `vs:v1:byok` written), Home reflecting the saved key, dark theme + `theme-color` + persistence, LEDM class +
+  persistence, remove + Undo restoring the key, and the `#main` skip link leaving the view alone. **Zero console
+  errors or unhandled rejections.**
+- **Service suite, 32/32 passing** (unchanged from Phase 2): storage round-trip, corrupt-JSON fallback,
+  unserialisable write, namespace clear; key validation/masking/save→list→remove→restore; `testKey` for
+  200/401/429/503/network/no-key; key in a header never a URL; Gemini header; console-leak assertion;
+  `contentService` against the real JSON plus malformed/404/network mapping.
+- **All 35 referenced files return 200** (`python3 -m http.server`), resolved through the full import closure —
+  zero 404s.
+- **All 11 JS modules parse as ES modules**; HTML tags balance, 46 ids with no duplicates, every
+  `aria-labelledby`/`aria-describedby`/`aria-controls`/`for` target resolves, every sprite reference resolves.
+- **Weight: 35 requests · 90.7 KB raw · 32.1 KB gzip** (budget 200 KB, ~109 KB headroom).
+- **Line caps:** largest file 199 lines (`index.html`); every file ≤ 200.
+- **Contrast computed, not eyeballed** (25 pairs): light ink 18.1:1, ink-2 9.7:1, ink-3 5.7:1, white-on-accent
+  6.3:1, accent on accent-weak 7.0:1, control border 3.76:1; dark ink 17.7:1, ink-2 12.1:1, ink-3 7.5:1,
+  on-accent 9.2:1, accent 9.0:1, control border 3.53:1.
+- **Hygiene greps:** no inline styles or handlers, no `innerHTML`/`eval`/`new Function`, no `console.*` except one
+  documented `console.warn`, no globals on `window`, no `fetch`/`localStorage` in `modules/`, no dependencies,
+  no stale references to the deleted `nav.js` / `layout.css` / `nav.css` / `dialog.css`.
+- **Class and token coverage:** every class emitted by markup or JS has a rule; every `var(--…)` is defined;
+  no dead rules remain; `[data-theme="dark"]` and `.ledm` both exist and are wired.
 
 **Not performed — do not assume these pass:**
 
-- **No real browser run.** Console-error check in DevTools, 375 px and 1280 px layout inspection, 200 % zoom,
-  keyboard-only tab order and focus-ring visibility were **not** executed here. These are the first things to do
-  before accepting the build.
+- **No real browser run.** jsdom executes the JS but paints nothing: pixel layout at 375 px and 1280 px, the
+  rail/tab-freeze behaviour of `100dvh` on iOS Safari, focus-ring visibility on real hardware, and 200 % zoom
+  were **not** observed. These are the first things to check in the preview.
 - **BYOK end-to-end with a live provider:** no key exists here and the sandbox cannot reach provider hosts. The
-  invalid-key path is proven at unit level (401 → `invalid-key`); the **valid-key path is implemented, not verified**.
-- **CORS behaviour** of Gemini / Groq / OpenRouter / OpenAI from a browser is unverified. If one blocks browser
-  requests, the UI reports "could not reach the provider" — honest, but the provider list would need trimming.
-- **Screen-reader pass** and the double-exercise test (click through twice) are pending a human.
+  invalid-key path is proven at unit level; the **valid-key path is implemented, not verified**.
+- **CORS behaviour** of the four providers from a browser remains unverified.
+- **Screen-reader pass** (VoiceOver/TalkBack) is pending a human.
 
 ---
 
@@ -160,6 +179,11 @@ Close-out audit findings (constraint audit, after the Phase 2 commit) — all fi
 | D-17 | Weight is measured through the import graph, not the `<script>` tags | The first honest number is 26 requests / 85.9 KB; the earlier 17-request figure was wrong and is corrected in §6. |
 | D-18 | **`AGENTS.md` left untouched** during close-out, even though the close-out protocol is not yet in it | `AGENTS.md §8` protects its protocol sections and the close-out rule itself says AGENTS.md changes need explicit approval. The protocol currently lives in the conversation only; codifying it in §5 is a one-line ask away. |
 | D-19 | Session 1 scope cut to **lesson viewer only**, notes moved to the following task | The close-out protocol requires exactly one next task; a viewer+notes bundle would have been two. |
+| D-20 | Redesign ships as **one feature commit**, not the two I first proposed | The frame and the views are inseparable: any split would have produced an intermediate commit with either dead CSS or orphan markup, which the Green Repo Rule forbids. |
+| D-21 | Content caching moved to `modules/contentStore.js`, not into `contentService` | A module-level cache inside the service changed its behaviour for every caller and broke the service suite's isolated scenarios. Caching is an app concern; services stay pure transports. |
+| D-22 | Settings became a **view**, and the `<dialog>` was deleted | A dialog on mobile steals the whole screen and needs a focus trap, Escape handling and scroll locking. A routed view gets back-button support and keyboard behaviour for free. |
+| D-23 | **`AGENTS.md` still untouched**, even though §3/§3.1 now describe the old palette | Same rule as D-18: changing the visual identity section is a rule change, and rule changes need explicit approval. Tracked as `A-01` in §4 rather than silently edited. |
+| D-24 | Home shows **only facts it can prove** — no streak, no completion ring, no "progress %" | Lessons do not exist yet, so any progress metric would be invented. Real counts + real key status + real shortcuts only. |
 
 ---
 
