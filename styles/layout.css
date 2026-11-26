@@ -36,6 +36,14 @@
   max-width: 60ch;
 }
 
+/* Below-the-fold blocks are not laid out or painted until they approach the viewport.
+   CSS-only lazy loading: no JS, no observer, no layout shift (intrinsic size is reserved). */
+.section--tinted,
+.footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 40rem;
+}
+
 /* ---------- Footer ---------- */
 .footer {
   background-image: var(--grad-ink);

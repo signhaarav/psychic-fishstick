@@ -23,6 +23,9 @@ Host (GitHub Pages / python3 -m http.server)
  └──────────────────────────────────────────────────────────────┘
 ```
 
+Measured first load, resolved through the import graph: **26 requests · 85.9 KB raw · 30.4 KB gzip**
+(budget 200 KB).
+
 Three consequences that shape everything:
 
 | Reality | Response |
@@ -308,8 +311,11 @@ Rules: namespaced and versioned; JSON only; written exclusively by services; cor
   error (what failed + retry), success. Built in CSS and in the module, not implied.
 - **No `innerHTML` with data.** `textContent` for strings, `createElement`/`<template>` for structure.
 - **No layout thrash:** read phase then write phase; no `getBoundingClientRect()` inside a mutating loop.
-- **Animation:** `transform`/`opacity` only, ≤ 300 ms, stagger ≤ 60 ms, fully disabled under
-  `prefers-reduced-motion: reduce` and under `<html class="ledm">`.
+- **Animation:** `transform`/`opacity` only — including transitions, so hover colour changes are instant —
+  ≤ 300 ms, stagger ≤ 60 ms, fully disabled under `prefers-reduced-motion: reduce` and `<html class="ledm">`.
+- **Lazy below the fold, CSS-only:** `.section--tinted` and `.footer` carry `content-visibility: auto` with
+  `contain-intrinsic-size: auto 40rem`, so off-screen blocks are not laid out or painted until they approach the
+  viewport. There is no JS observer and no layout shift.
 - **Accessibility is structural:** landmarks, one `h1`, labelled inputs, `aria-expanded` on the menu, Esc to
   close dialogs, focus returned to the trigger, `aria-live` for results and toasts, 3:1 focus ring at 2 px offset.
 - **Touch targets ≥ 44×44 px**, verified at 375 px.

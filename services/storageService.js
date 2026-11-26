@@ -42,7 +42,7 @@ export function read(key, fallback = null) {
     if (raw === null) return fallback;
     return JSON.parse(raw);
   } catch {
-    console.warn(`[storage] value at "${key}" is not valid JSON — falling back`);
+    console.warn(`[storage] value at storage key "${key}" is not valid JSON — falling back`);
     return fallback;
   }
 }

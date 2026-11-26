@@ -43,7 +43,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
-  transition: transform var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition: transform var(--dur-1) var(--ease);
 }
 
 .subject-card:hover {

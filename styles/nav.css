@@ -58,6 +58,11 @@
   font-weight: 600;
 }
 
+.nav__label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
 .nav__toggle-icon {
   width: 20px;
   height: 20px;
